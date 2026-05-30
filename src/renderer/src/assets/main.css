@@ -348,6 +348,47 @@ code {
   font-weight: 600;
 }
 
+.db-info {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 13px;
+}
+
+.settings-table-wrap {
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.settings-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+}
+
+.settings-table th,
+.settings-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+  font-size: 13px;
+}
+
+.settings-table th {
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(242, 250, 245, 0.82);
+  font-weight: 700;
+}
+
+.settings-table td {
+  color: rgba(234, 246, 239, 0.78);
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

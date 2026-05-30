@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import Layout from './layout/Layout'
 
 function App(): React.JSX.Element {

@@ -1,7 +1,9 @@
+/* eslint-disable prettier/prettier */
 import { app, shell, BrowserWindow, ipcMain, nativeImage } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import iconPath from '../../resources/icon.png?asset'
+import { getDatabase, getDatabasePathForApp, listConfiguration } from './database'
 
 const icon = nativeImage.createFromPath(iconPath)
 
@@ -41,6 +43,9 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  // Ensure local SQLite file, tables, and seed data are ready at app startup.
+  getDatabase()
+
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.xyvero')
 
@@ -53,6 +58,8 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
+  ipcMain.handle('db:getPath', () => getDatabasePathForApp())
+  ipcMain.handle('db:listConfiguration', () => listConfiguration())
 
   createWindow()
 
