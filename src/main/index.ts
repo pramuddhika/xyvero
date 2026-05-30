@@ -56,12 +56,8 @@ app.whenReady().then(() => {
 
   createWindow()
 
-  if (process.platform === 'darwin') {
-    try {
-      app.dock.setIcon(icon)
-    } catch (e) {
-      // ignore if not supported in this environment
-    }
+  if (process.platform === 'darwin' && app.dock) {
+    app.dock.setIcon(icon)
   }
 
   app.on('activate', function () {
