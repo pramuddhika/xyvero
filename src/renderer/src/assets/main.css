@@ -359,6 +359,85 @@ code {
   font-size: 13px;
 }
 
+.settings-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.setting-row {
+  display: block;
+}
+
+.setting-description-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.035);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.setting-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+  align-items: center;
+  gap: 14px;
+}
+
+.setting-select {
+  min-width: 0;
+}
+
+.setting-description-card h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #eaf6ef;
+  margin: 0;
+}
+
+.setting-description-card p {
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(232, 244, 238, 0.78);
+  margin: 0;
+}
+
+.settings-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #edf7f1;
+}
+
+.setting-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e8f4ee;
+}
+
+.setting-help {
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(232, 244, 238, 0.72);
+}
+
 .settings-table-wrap {
   overflow: auto;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -489,6 +568,10 @@ code {
   .side-nav.closed .nav-item {
     justify-content: center;
     padding-inline: 10px;
+  }
+
+  .setting-header {
+    grid-template-columns: 1fr;
   }
 }
 

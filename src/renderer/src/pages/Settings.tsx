@@ -1,5 +1,7 @@
 /* eslint-disable prettier/prettier */
-import React from 'react'
+import React, { useMemo, useState } from 'react'
+import Select, { type StylesConfig } from 'react-select'
+import currencyCodes from 'currency-codes'
 
 type ConfigurationRecord = {
   configuration_id: number
@@ -13,7 +15,111 @@ type SettingsProps = {
   isLoading: boolean
 }
 
+type SelectOption = {
+  value: string
+  label: string
+}
+
+const getCurrencySymbol = (currencyCode: string): string => {
+  try {
+    const parts = new Intl.NumberFormat('en', {
+      style: 'currency',
+      currency: currencyCode,
+      currencyDisplay: 'narrowSymbol'
+    }).formatToParts(1)
+
+    const symbol = parts.find((part) => part.type === 'currency')?.value ?? ''
+    return symbol === currencyCode ? '' : symbol
+  } catch {
+    return ''
+  }
+}
+
+const currencyOptions: SelectOption[] = currencyCodes.data
+  .map((item) => {
+    const symbol = getCurrencySymbol(item.code)
+    const currencyName = item.currency ?? item.code
+
+    return {
+      value: item.code,
+      label: `${symbol ? `${symbol} ` : ''}${item.code} - ${currencyName}`
+    }
+  })
+  .sort((a, b) => a.value.localeCompare(b.value))
+
+const monthStartOptions: SelectOption[] = Array.from({ length: 30 }, (_, index) => {
+  const day = String(index + 1)
+  return { value: day, label: day }
+})
+
+const selectStyles: StylesConfig<SelectOption, false> = {
+  control: (base, state) => ({
+    ...base,
+    minHeight: 42,
+    borderRadius: 10,
+    borderColor: state.isFocused ? 'rgba(54, 177, 118, 0.55)' : 'rgba(255, 255, 255, 0.14)',
+    boxShadow: 'none',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)'
+  }),
+  menu: (base) => ({
+    ...base,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: '#142f3a',
+    border: '1px solid rgba(255, 255, 255, 0.14)'
+  }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isFocused ? 'rgba(54, 177, 118, 0.2)' : 'transparent',
+    color: '#e8f4ee',
+    cursor: 'pointer'
+  }),
+  singleValue: (base) => ({
+    ...base,
+    color: '#e8f4ee'
+  }),
+  input: (base) => ({
+    ...base,
+    color: '#e8f4ee'
+  }),
+  placeholder: (base) => ({
+    ...base,
+    color: 'rgba(232, 244, 238, 0.65)'
+  }),
+  dropdownIndicator: (base) => ({
+    ...base,
+    color: 'rgba(232, 244, 238, 0.8)'
+  }),
+  indicatorSeparator: (base) => ({
+    ...base,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)'
+  })
+}
+
 function Settings({ configuration, databasePath, isLoading }: SettingsProps): React.JSX.Element {
+  const [currencyType, setCurrencyType] = useState<SelectOption | null>(null)
+  const [monthStartDate, setMonthStartDate] = useState<SelectOption | null>(null)
+
+  const configurationMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const item of configuration) {
+      map.set(item.configuration_key, item.configuration_value)
+    }
+    return map
+  }, [configuration])
+
+  const resolvedCurrency = useMemo(() => {
+    const currencyValue = configurationMap.get('CURRENCY_TYPE')
+    return currencyOptions.find((option) => option.value === currencyValue) ?? currencyOptions[0]
+  }, [configurationMap])
+
+  const resolvedMonthStart = useMemo(() => {
+    const monthStartValue = configurationMap.get('MONTH_START_DATE')
+    return (
+      monthStartOptions.find((option) => option.value === monthStartValue) ?? monthStartOptions[0]
+    )
+  }, [configurationMap])
+
   return (
     <section className="content-area">
       <h2>Settings</h2>
@@ -22,6 +128,56 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
       <div className="db-info">
         <strong>SQLite path:</strong> <span>{databasePath || 'Loading...'}</span>
       </div>
+
+      <section className="settings-card">
+        <h3>General Settings</h3>
+
+        <div className="settings-stack">
+          <div className="setting-row">
+            <div className="setting-description-card">
+              <div className="setting-header">
+                <h4>Currency Type</h4>
+                <div className="setting-select">
+                  <Select
+                    inputId="currencyType"
+                    options={currencyOptions}
+                    value={currencyType ?? resolvedCurrency}
+                    onChange={(selected) => setCurrencyType(selected)}
+                    styles={selectStyles}
+                    isSearchable
+                    placeholder="Select currency"
+                  />
+                </div>
+              </div>
+
+              <p>
+                Choose how money values are shown across the app. Example: <strong>$ USD</strong>.
+              </p>
+            </div>
+          </div>
+
+          <div className="setting-row">
+            <div className="setting-description-card">
+              <div className="setting-header">
+                <h4>Account Month Start Date</h4>
+                <div className="setting-select">
+                  <Select
+                    inputId="monthStartDate"
+                    options={monthStartOptions}
+                    value={monthStartDate ?? resolvedMonthStart}
+                    onChange={(selected) => setMonthStartDate(selected)}
+                    styles={selectStyles}
+                    isSearchable={false}
+                    placeholder="Select day"
+                  />
+                </div>
+              </div>
+
+              <p>Set the day that starts your monthly cycle, budgets, and summaries.</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {isLoading ? <p>Loading configuration...</p> : null}
 
