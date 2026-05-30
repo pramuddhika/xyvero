@@ -1,12 +1,12 @@
 @import './base.css';
+@import "tailwindcss";
 
 body {
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background-image: url('./wavy-lines.svg');
-  background-size: cover;
+  background-color: var(--color-background);
   user-select: none;
 }
 
@@ -44,7 +44,7 @@ code {
 }
 
 .logo:hover {
-  filter: drop-shadow(0 0 1.2em #6988e6aa);
+  filter: drop-shadow(0 0 1.2em rgba(43,208,106,0.45));
 }
 
 .creator {
@@ -73,7 +73,7 @@ code {
 }
 
 .react {
-  background: -webkit-linear-gradient(315deg, #087ea4 55%, #7c93ee);
+  background: -webkit-linear-gradient(315deg, var(--ev-accent-green) 0%, #ffffff 60%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -81,7 +81,7 @@ code {
 }
 
 .ts {
-  background: -webkit-linear-gradient(315deg, #3178c6 45%, #f0dc4e);
+  background: -webkit-linear-gradient(315deg, #17a2a8 0%, #f0dc4e 60%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
