@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable prettier/prettier */
 import React, { useState } from 'react'
 import Sidebar from './Sidebar'
 import Transactions from '../pages/Transactions'
@@ -40,16 +42,6 @@ function Layout(): React.JSX.Element {
       />
 
       <main className="main-panel">
-        <header className="main-header">
-          <div className="header-copy">
-            <span className="header-kicker">{activePage}</span>
-            <span className="header-title">Xyvero Workspace</span>
-          </div>
-          <div className="header-status" aria-label="Application status">
-            Ready
-          </div>
-        </header>
-
         {renderPage()}
       </main>
     </div>

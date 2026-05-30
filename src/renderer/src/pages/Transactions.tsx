@@ -5,9 +5,7 @@ import Versions from '../components/Versions'
 function Transactions(): React.JSX.Element {
   return (
     <section className="content-area">
-      <p className="tip">
-        Use <code>F12</code> for Developer Tools
-      </p>
+
       <div className="actions">
         <div className="action">
           <a href="https://electron-vite.org/" target="_blank" rel="noreferrer">
