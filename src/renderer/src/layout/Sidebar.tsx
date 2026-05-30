@@ -6,6 +6,8 @@ import { JSX } from 'react/jsx-runtime'
 type SidebarProps = {
   isOpen: boolean
   onToggle: () => void
+  onNavigate?: (page: string) => void
+  active?: string
 }
 
 const navItems = [
@@ -56,7 +58,7 @@ const Icons: Record<string, JSX.Element> = {
   )
 }
 
-function Sidebar({ isOpen, onToggle }: SidebarProps): React.JSX.Element {
+function Sidebar({ isOpen, onToggle, onNavigate, active }: SidebarProps): React.JSX.Element {
   return (
     <aside className={`side-nav ${isOpen ? 'open' : 'closed'}`}>
       {isOpen ? (
@@ -95,7 +97,13 @@ function Sidebar({ isOpen, onToggle }: SidebarProps): React.JSX.Element {
 
       <nav className="side-nav-links" aria-label="Primary">
         {navItems.map((item) => (
-          <button key={item.label} type="button" className="nav-item" title={item.description}>
+          <button
+            key={item.label}
+            type="button"
+            className={`nav-item ${active === item.label ? 'active' : ''}`}
+            title={item.description}
+            onClick={() => onNavigate?.(item.label)}
+          >
             <span className="nav-item-icon" aria-hidden="true">
               {Icons[item.label] ?? null}
             </span>
