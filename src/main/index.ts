@@ -8,8 +8,8 @@ const icon = nativeImage.createFromPath(iconPath)
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 1320,
+    height: 860,
     show: false,
     autoHideMenuBar: true,
     icon,
