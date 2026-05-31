@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import React, { useMemo, useState } from 'react'
-import Select, { type StylesConfig } from 'react-select'
+import Select, { type StylesConfig, type Theme } from 'react-select'
 import currencyCodes from 'currency-codes'
 
 type ConfigurationRecord = {
@@ -85,7 +85,11 @@ const selectStyles: StylesConfig<SelectOption, false> = {
   }),
   option: (base, state) => ({
     ...base,
-    backgroundColor: state.isFocused ? 'rgba(54, 177, 118, 0.2)' : 'transparent',
+    backgroundColor: state.isSelected
+      ? 'rgba(54, 177, 118, 0.24)'
+      : state.isFocused
+        ? 'rgba(54, 177, 118, 0.2)'
+        : 'transparent',
     color: '#e8f4ee',
     cursor: 'pointer'
   }),
@@ -110,6 +114,17 @@ const selectStyles: StylesConfig<SelectOption, false> = {
     backgroundColor: 'rgba(255, 255, 255, 0.2)'
   })
 }
+
+const selectTheme = (theme: Theme): Theme => ({
+  ...theme,
+  colors: {
+    ...theme.colors,
+    primary: 'rgba(54, 177, 118, 0.95)',
+    primary25: 'rgba(54, 177, 118, 0.2)',
+    primary50: 'rgba(54, 177, 118, 0.3)',
+    primary75: 'rgba(54, 177, 118, 0.4)'
+  }
+})
 
 function Settings({ configuration, databasePath, isLoading }: SettingsProps): React.JSX.Element {
   const [currencyType, setCurrencyType] = useState<SelectOption | null>(null)
@@ -182,6 +197,7 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
                     value={currencyType ?? resolvedCurrency}
                     onChange={(selected) => setCurrencyType(selected)}
                     styles={selectStyles}
+                    theme={selectTheme}
                     isSearchable
                     placeholder="Select currency"
                   />
@@ -205,6 +221,7 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
                     value={monthStartDate ?? resolvedMonthStart}
                     onChange={(selected) => setMonthStartDate(selected)}
                     styles={selectStyles}
+                    theme={selectTheme}
                     isSearchable={false}
                     placeholder="Select day"
                   />
@@ -226,6 +243,7 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
                     value={weekStartDate ?? resolvedWeekStart}
                     onChange={(selected) => setWeekStartDate(selected)}
                     styles={selectStyles}
+                    theme={selectTheme}
                     isSearchable={false}
                     placeholder="Select day"
                   />
@@ -247,6 +265,7 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
                     value={firstView ?? resolvedFirstView}
                     onChange={(selected) => setFirstView(selected)}
                     styles={selectStyles}
+                    theme={selectTheme}
                     isSearchable={false}
                     placeholder="Select view"
                   />
@@ -268,6 +287,7 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
                     value={theme ?? resolvedTheme}
                     onChange={(selected) => setTheme(selected)}
                     styles={selectStyles}
+                    theme={selectTheme}
                     isSearchable={false}
                     placeholder="Select theme"
                   />
