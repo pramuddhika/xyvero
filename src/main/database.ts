@@ -34,7 +34,7 @@ function createTables(database: Database.Database): void {
       (2, 'MONTH_START_DATE', '1'),
       (3, 'WEEK_START_DATE', 'Monday'),
       (4, 'THEME', 'dark'),
-      (5, 'FIRST_VIEW', 'calender')
+      (5, 'FIRST_VIEW', 'Calendar')
   `)
 }
 

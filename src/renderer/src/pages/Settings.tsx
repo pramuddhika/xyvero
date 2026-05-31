@@ -52,6 +52,16 @@ const monthStartOptions: SelectOption[] = Array.from({ length: 30 }, (_, index) 
   return { value: day, label: day }
 })
 
+const weekStartOptions: SelectOption[] = [
+  { value: 'Monday', label: 'Monday' },
+  { value: 'Sunday', label: 'Sunday' }
+]
+
+const firstViewOptions: SelectOption[] = [
+  { value: 'Calendar', label: 'Calendar' },
+  { value: 'Daily', label: 'Daily Transaction View' }
+]
+
 const selectStyles: StylesConfig<SelectOption, false> = {
   control: (base, state) => ({
     ...base,
@@ -99,6 +109,8 @@ const selectStyles: StylesConfig<SelectOption, false> = {
 function Settings({ configuration, databasePath, isLoading }: SettingsProps): React.JSX.Element {
   const [currencyType, setCurrencyType] = useState<SelectOption | null>(null)
   const [monthStartDate, setMonthStartDate] = useState<SelectOption | null>(null)
+  const [weekStartDate, setWeekStartDate] = useState<SelectOption | null>(null)
+  const [firstView, setFirstView] = useState<SelectOption | null>(null)
 
   const configurationMap = useMemo(() => {
     const map = new Map<string, string>()
@@ -118,6 +130,21 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
     return (
       monthStartOptions.find((option) => option.value === monthStartValue) ?? monthStartOptions[0]
     )
+  }, [configurationMap])
+
+  const resolvedWeekStart = useMemo(() => {
+    const weekStartValue = configurationMap.get('WEEK_START_DATE')
+    return weekStartOptions.find((option) => option.value === weekStartValue) ?? weekStartOptions[0]
+  }, [configurationMap])
+
+  const resolvedFirstView = useMemo(() => {
+    const firstViewValue = configurationMap.get('FIRST_VIEW')
+
+    if (firstViewValue?.toLowerCase() === 'calender') {
+      return firstViewOptions[0]
+    }
+
+    return firstViewOptions.find((option) => option.value === firstViewValue) ?? firstViewOptions[0]
   }, [configurationMap])
 
   return (
@@ -174,6 +201,48 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
               </div>
 
               <p>Set the day that starts your monthly cycle, budgets, and summaries.</p>
+            </div>
+          </div>
+
+          <div className="setting-row">
+            <div className="setting-description-card">
+              <div className="setting-header">
+                <h4>Week Start Date</h4>
+                <div className="setting-select">
+                  <Select
+                    inputId="weekStartDate"
+                    options={weekStartOptions}
+                    value={weekStartDate ?? resolvedWeekStart}
+                    onChange={(selected) => setWeekStartDate(selected)}
+                    styles={selectStyles}
+                    isSearchable={false}
+                    placeholder="Select day"
+                  />
+                </div>
+              </div>
+
+              <p>Choose whether weeks start on Monday or Sunday in the app.</p>
+            </div>
+          </div>
+
+          <div className="setting-row">
+            <div className="setting-description-card">
+              <div className="setting-header">
+                <h4>First View</h4>
+                <div className="setting-select">
+                  <Select
+                    inputId="firstView"
+                    options={firstViewOptions}
+                    value={firstView ?? resolvedFirstView}
+                    onChange={(selected) => setFirstView(selected)}
+                    styles={selectStyles}
+                    isSearchable={false}
+                    placeholder="Select view"
+                  />
+                </div>
+              </div>
+
+              <p>Choose which transactions view opens first when the app starts.</p>
             </div>
           </div>
         </div>
