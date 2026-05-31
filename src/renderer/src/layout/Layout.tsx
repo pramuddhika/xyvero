@@ -40,6 +40,12 @@ function Layout(): React.JSX.Element {
     void loadConfiguration()
   }, [loadConfiguration])
 
+  useEffect(() => {
+    if (activePage === 'Settings') {
+      void loadConfiguration()
+    }
+  }, [activePage, loadConfiguration])
+
   const renderPage = () => {
     switch (activePage) {
       case 'Transactions':
