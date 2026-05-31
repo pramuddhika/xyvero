@@ -67,3 +67,20 @@ export function listConfiguration(): ConfigurationRecord[] {
     )
     .all() as ConfigurationRecord[]
 }
+
+export function setConfigurationValue(
+  configurationKey: string,
+  configurationValue: string
+): void {
+  const database = getDatabase()
+  database
+    .prepare(
+      `
+        INSERT INTO configuration (configuration_key, configuration_value)
+        VALUES (?, ?)
+        ON CONFLICT(configuration_key) DO UPDATE SET
+          configuration_value = excluded.configuration_value
+      `
+    )
+    .run(configurationKey, configurationValue)
+}

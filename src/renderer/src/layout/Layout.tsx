@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable prettier/prettier */
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import Sidebar from './Sidebar'
 import Transactions from '../pages/Transactions'
 import Statistics from '../pages/Statistics'
@@ -22,23 +22,23 @@ function Layout(): React.JSX.Element {
   const [databasePath, setDatabasePath] = useState('')
   const [isConfigLoading, setIsConfigLoading] = useState(true)
 
-  useEffect(() => {
-    const loadConfigurationAtStartup = async (): Promise<void> => {
-      try {
-        const [path, rows] = await Promise.all([
-          window.api.getDatabasePath(),
-          window.api.listConfiguration()
-        ])
+  const loadConfiguration = useCallback(async (): Promise<void> => {
+    try {
+      const [path, rows] = await Promise.all([
+        window.api.getDatabasePath(),
+        window.api.listConfiguration()
+      ])
 
-        setDatabasePath(path)
-        setConfiguration(rows)
-      } finally {
-        setIsConfigLoading(false)
-      }
+      setDatabasePath(path)
+      setConfiguration(rows)
+    } finally {
+      setIsConfigLoading(false)
     }
-
-    void loadConfigurationAtStartup()
   }, [])
+
+  useEffect(() => {
+    void loadConfiguration()
+  }, [loadConfiguration])
 
   const renderPage = () => {
     switch (activePage) {
@@ -56,6 +56,7 @@ function Layout(): React.JSX.Element {
             configuration={configuration}
             databasePath={databasePath}
             isLoading={isConfigLoading}
+            onConfigurationChange={loadConfiguration}
           />
         )
       case 'About':

@@ -11,6 +11,8 @@ const api = {
       configuration_value: string
     }>
   > => electronAPI.ipcRenderer.invoke('db:listConfiguration'),
+  setConfigurationValue: (configurationKey: string, configurationValue: string): Promise<void> =>
+    electronAPI.ipcRenderer.invoke('db:setConfigurationValue', configurationKey, configurationValue),
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

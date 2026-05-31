@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import { ElectronAPI } from '@electron-toolkit/preload'
 
 type ConfigurationRecord = {
@@ -10,6 +9,7 @@ type ConfigurationRecord = {
 interface AppApi {
   getDatabasePath: () => Promise<string>
   listConfiguration: () => Promise<ConfigurationRecord[]>
+  setConfigurationValue: (configurationKey: string, configurationValue: string) => Promise<void>
 }
 
 declare global {

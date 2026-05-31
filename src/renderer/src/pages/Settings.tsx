@@ -13,12 +13,20 @@ type SettingsProps = {
   configuration: ConfigurationRecord[]
   databasePath: string
   isLoading: boolean
+  onConfigurationChange: () => Promise<void>
 }
 
 type SelectOption = {
   value: string
   label: string
 }
+
+type ConfigurationKey =
+  | 'CURRENCY_TYPE'
+  | 'MONTH_START_DATE'
+  | 'WEEK_START_DATE'
+  | 'FIRST_VIEW'
+  | 'THEME'
 
 const getCurrencySymbol = (currencyCode: string): string => {
   try {
@@ -126,20 +134,31 @@ const selectTheme = (theme: Theme): Theme => ({
   }
 })
 
-function Settings({ configuration, databasePath, isLoading }: SettingsProps): React.JSX.Element {
-  const [currencyType, setCurrencyType] = useState<SelectOption | null>(null)
-  const [monthStartDate, setMonthStartDate] = useState<SelectOption | null>(null)
-  const [weekStartDate, setWeekStartDate] = useState<SelectOption | null>(null)
-  const [firstView, setFirstView] = useState<SelectOption | null>(null)
-  const [theme, setTheme] = useState<SelectOption | null>(null)
+function Settings({ configuration, databasePath, isLoading, onConfigurationChange }: SettingsProps): React.JSX.Element {
+  const [savingKey, setSavingKey] = useState<ConfigurationKey | null>(null)
+
+  const configurationRows = configuration
 
   const configurationMap = useMemo(() => {
     const map = new Map<string, string>()
-    for (const item of configuration) {
+    for (const item of configurationRows) {
       map.set(item.configuration_key, item.configuration_value)
     }
     return map
-  }, [configuration])
+  }, [configurationRows])
+
+  const updateConfigurationValue = async (
+    configurationKey: ConfigurationKey,
+    configurationValue: string
+  ): Promise<void> => {
+    setSavingKey(configurationKey)
+    try {
+      await window.api.setConfigurationValue(configurationKey, configurationValue)
+      await onConfigurationChange()
+    } finally {
+      setSavingKey(null)
+    }
+  }
 
   const resolvedCurrency = useMemo(() => {
     const currencyValue = configurationMap.get('CURRENCY_TYPE')
@@ -175,15 +194,12 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
 
   return (
     <section className="content-area">
-      <h2>Settings</h2>
-      <p>Application settings and preferences.</p>
-
-      <div className="db-info">
-        <strong>SQLite path:</strong> <span>{databasePath || 'Loading...'}</span>
-      </div>
-
-      <section className="settings-card">
         <h3>General Settings</h3>
+        <p>Application settings and preferences.</p>
+
+        <div className="db-info">
+          <strong>SQLite path:</strong> <span>{databasePath || 'Loading...'}</span>
+        </div>
 
         <div className="settings-stack">
           <div className="setting-row">
@@ -194,11 +210,16 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
                   <Select
                     inputId="currencyType"
                     options={currencyOptions}
-                    value={currencyType ?? resolvedCurrency}
-                    onChange={(selected) => setCurrencyType(selected)}
+                    value={resolvedCurrency}
+                    onChange={(selected) => {
+                      if (selected) {
+                        void updateConfigurationValue('CURRENCY_TYPE', selected.value)
+                      }
+                    }}
                     styles={selectStyles}
                     theme={selectTheme}
                     isSearchable
+                    isDisabled={savingKey === 'CURRENCY_TYPE'}
                     placeholder="Select currency"
                   />
                 </div>
@@ -218,11 +239,16 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
                   <Select
                     inputId="monthStartDate"
                     options={monthStartOptions}
-                    value={monthStartDate ?? resolvedMonthStart}
-                    onChange={(selected) => setMonthStartDate(selected)}
+                    value={resolvedMonthStart}
+                    onChange={(selected) => {
+                      if (selected) {
+                        void updateConfigurationValue('MONTH_START_DATE', selected.value)
+                      }
+                    }}
                     styles={selectStyles}
                     theme={selectTheme}
                     isSearchable={false}
+                    isDisabled={savingKey === 'MONTH_START_DATE'}
                     placeholder="Select day"
                   />
                 </div>
@@ -240,11 +266,16 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
                   <Select
                     inputId="weekStartDate"
                     options={weekStartOptions}
-                    value={weekStartDate ?? resolvedWeekStart}
-                    onChange={(selected) => setWeekStartDate(selected)}
+                    value={resolvedWeekStart}
+                    onChange={(selected) => {
+                      if (selected) {
+                        void updateConfigurationValue('WEEK_START_DATE', selected.value)
+                      }
+                    }}
                     styles={selectStyles}
                     theme={selectTheme}
                     isSearchable={false}
+                    isDisabled={savingKey === 'WEEK_START_DATE'}
                     placeholder="Select day"
                   />
                 </div>
@@ -262,11 +293,16 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
                   <Select
                     inputId="firstView"
                     options={firstViewOptions}
-                    value={firstView ?? resolvedFirstView}
-                    onChange={(selected) => setFirstView(selected)}
+                    value={resolvedFirstView}
+                    onChange={(selected) => {
+                      if (selected) {
+                        void updateConfigurationValue('FIRST_VIEW', selected.value)
+                      }
+                    }}
                     styles={selectStyles}
                     theme={selectTheme}
                     isSearchable={false}
+                    isDisabled={savingKey === 'FIRST_VIEW'}
                     placeholder="Select view"
                   />
                 </div>
@@ -284,11 +320,16 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
                   <Select
                     inputId="theme"
                     options={themeOptions}
-                    value={theme ?? resolvedTheme}
-                    onChange={(selected) => setTheme(selected)}
+                    value={resolvedTheme}
+                    onChange={(selected) => {
+                      if (selected) {
+                        void updateConfigurationValue('THEME', selected.value)
+                      }
+                    }}
                     styles={selectStyles}
                     theme={selectTheme}
                     isSearchable={false}
+                    isDisabled={savingKey === 'THEME'}
                     placeholder="Select theme"
                   />
                 </div>
@@ -298,32 +339,9 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
             </div>
           </div>
         </div>
-      </section>
 
       {isLoading ? <p>Loading configuration...</p> : null}
 
-      {!isLoading ? (
-        <div className="settings-table-wrap">
-          <table className="settings-table">
-            <thead>
-              <tr>
-                <th>configuration_id</th>
-                <th>configuration_key</th>
-                <th>configuration_value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {configuration.map((row) => (
-                <tr key={row.configuration_id}>
-                  <td>{row.configuration_id}</td>
-                  <td>{row.configuration_key}</td>
-                  <td>{row.configuration_value}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
     </section>
   )
 }

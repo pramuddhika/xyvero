@@ -3,7 +3,12 @@ import { app, shell, BrowserWindow, ipcMain, nativeImage } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import iconPath from '../../resources/icon.png?asset'
-import { getDatabase, getDatabasePathForApp, listConfiguration } from './database'
+import {
+  getDatabase,
+  getDatabasePathForApp,
+  listConfiguration,
+  setConfigurationValue
+} from './database'
 
 const icon = nativeImage.createFromPath(iconPath)
 
@@ -60,6 +65,9 @@ app.whenReady().then(() => {
   ipcMain.on('ping', () => console.log('pong'))
   ipcMain.handle('db:getPath', () => getDatabasePathForApp())
   ipcMain.handle('db:listConfiguration', () => listConfiguration())
+  ipcMain.handle('db:setConfigurationValue', (_, configurationKey: string, configurationValue: string) => {
+    setConfigurationValue(configurationKey, configurationValue)
+  })
 
   createWindow()
 
