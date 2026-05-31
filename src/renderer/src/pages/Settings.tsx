@@ -62,6 +62,11 @@ const firstViewOptions: SelectOption[] = [
   { value: 'Daily', label: 'Daily Transaction View' }
 ]
 
+const themeOptions: SelectOption[] = [
+  { value: 'dark', label: 'Dark' },
+  { value: 'light', label: 'Light' }
+]
+
 const selectStyles: StylesConfig<SelectOption, false> = {
   control: (base, state) => ({
     ...base,
@@ -111,6 +116,7 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
   const [monthStartDate, setMonthStartDate] = useState<SelectOption | null>(null)
   const [weekStartDate, setWeekStartDate] = useState<SelectOption | null>(null)
   const [firstView, setFirstView] = useState<SelectOption | null>(null)
+  const [theme, setTheme] = useState<SelectOption | null>(null)
 
   const configurationMap = useMemo(() => {
     const map = new Map<string, string>()
@@ -145,6 +151,11 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
     }
 
     return firstViewOptions.find((option) => option.value === firstViewValue) ?? firstViewOptions[0]
+  }, [configurationMap])
+
+  const resolvedTheme = useMemo(() => {
+    const themeValue = configurationMap.get('THEME')
+    return themeOptions.find((option) => option.value === themeValue) ?? themeOptions[0]
   }, [configurationMap])
 
   return (
@@ -243,6 +254,27 @@ function Settings({ configuration, databasePath, isLoading }: SettingsProps): Re
               </div>
 
               <p>Choose which transactions view opens first when the app starts.</p>
+            </div>
+          </div>
+
+          <div className="setting-row">
+            <div className="setting-description-card">
+              <div className="setting-header">
+                <h4>Theme</h4>
+                <div className="setting-select">
+                  <Select
+                    inputId="theme"
+                    options={themeOptions}
+                    value={theme ?? resolvedTheme}
+                    onChange={(selected) => setTheme(selected)}
+                    styles={selectStyles}
+                    isSearchable={false}
+                    placeholder="Select theme"
+                  />
+                </div>
+              </div>
+
+              <p>Switch between the dark and light app themes.</p>
             </div>
           </div>
         </div>
