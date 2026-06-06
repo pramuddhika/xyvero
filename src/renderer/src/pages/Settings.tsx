@@ -13,6 +13,7 @@ type SettingsProps = {
   configuration: ConfigurationRecord[]
   databasePath: string
   isLoading: boolean
+  onConfigurationUpdated: (configurationKey: ConfigurationKey, configurationValue: string) => void
 }
 
 type SelectOption = {
@@ -74,21 +75,25 @@ const themeOptions: SelectOption[] = [
   { value: 'light', label: 'Light' }
 ]
 
-const selectStyles: StylesConfig<SelectOption, false> = {
+const createSelectStyles = (themeMode: 'dark' | 'light'): StylesConfig<SelectOption, false> => ({
   control: (base, state) => ({
     ...base,
     minHeight: 42,
     borderRadius: 10,
-    borderColor: state.isFocused ? 'rgba(54, 177, 118, 0.55)' : 'rgba(255, 255, 255, 0.14)',
+    borderColor: state.isFocused
+      ? 'rgba(54, 177, 118, 0.55)'
+      : themeMode === 'light'
+        ? 'rgba(20, 47, 58, 0.12)'
+        : 'rgba(255, 255, 255, 0.14)',
     boxShadow: 'none',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)'
+    backgroundColor: themeMode === 'light' ? 'rgba(255, 255, 255, 0.92)' : 'rgba(255, 255, 255, 0.06)'
   }),
   menu: (base) => ({
     ...base,
     borderRadius: 10,
     overflow: 'hidden',
-    backgroundColor: '#142f3a',
-    border: '1px solid rgba(255, 255, 255, 0.14)'
+    backgroundColor: themeMode === 'light' ? '#ffffff' : '#142f3a',
+    border: `1px solid ${themeMode === 'light' ? 'rgba(20, 47, 58, 0.12)' : 'rgba(255, 255, 255, 0.14)'}`
   }),
   option: (base, state) => ({
     ...base,
@@ -97,30 +102,30 @@ const selectStyles: StylesConfig<SelectOption, false> = {
       : state.isFocused
         ? 'rgba(54, 177, 118, 0.2)'
         : 'transparent',
-    color: '#e8f4ee',
+    color: themeMode === 'light' ? '#12303a' : '#e8f4ee',
     cursor: 'pointer'
   }),
   singleValue: (base) => ({
     ...base,
-    color: '#e8f4ee'
+    color: themeMode === 'light' ? '#12303a' : '#e8f4ee'
   }),
   input: (base) => ({
     ...base,
-    color: '#e8f4ee'
+    color: themeMode === 'light' ? '#12303a' : '#e8f4ee'
   }),
   placeholder: (base) => ({
     ...base,
-    color: 'rgba(232, 244, 238, 0.65)'
+    color: themeMode === 'light' ? 'rgba(18, 48, 58, 0.55)' : 'rgba(232, 244, 238, 0.65)'
   }),
   dropdownIndicator: (base) => ({
     ...base,
-    color: 'rgba(232, 244, 238, 0.8)'
+    color: themeMode === 'light' ? 'rgba(18, 48, 58, 0.7)' : 'rgba(232, 244, 238, 0.8)'
   }),
   indicatorSeparator: (base) => ({
     ...base,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)'
+    backgroundColor: themeMode === 'light' ? 'rgba(20, 47, 58, 0.12)' : 'rgba(255, 255, 255, 0.2)'
   })
-}
+})
 
 const selectTheme = (theme: Theme): Theme => ({
   ...theme,
@@ -133,7 +138,7 @@ const selectTheme = (theme: Theme): Theme => ({
   }
 })
 
-function Settings({ configuration }: SettingsProps): React.JSX.Element {
+function Settings({ configuration, onConfigurationUpdated }: SettingsProps): React.JSX.Element {
   const [savingKey, setSavingKey] = useState<ConfigurationKey | null>(null)
   const [configurationOverrides, setConfigurationOverrides] = useState<Map<string, string>>(
     () => new Map()
@@ -150,6 +155,13 @@ function Settings({ configuration }: SettingsProps): React.JSX.Element {
     return map
   }, [configuration, configurationOverrides])
 
+  const themeMode = useMemo(() => {
+    const themeValue = configurationMap.get('THEME')
+    return themeValue === 'light' ? 'light' : 'dark'
+  }, [configurationMap])
+
+  const selectStyles = useMemo(() => createSelectStyles(themeMode), [themeMode])
+
   const updateConfigurationValue = async (
     configurationKey: ConfigurationKey,
     configurationValue: string
@@ -160,6 +172,7 @@ function Settings({ configuration }: SettingsProps): React.JSX.Element {
       nextOverrides.set(configurationKey, configurationValue)
       return nextOverrides
     })
+    onConfigurationUpdated(configurationKey, configurationValue)
 
     try {
       await window.api.setConfigurationValue(configurationKey, configurationValue)
@@ -174,6 +187,10 @@ function Settings({ configuration }: SettingsProps): React.JSX.Element {
           )
           return nextOverrides
         })
+        onConfigurationUpdated(
+          updatedConfiguration.configuration_key as ConfigurationKey,
+          updatedConfiguration.configuration_value
+        )
       }
     } finally {
       setSavingKey(null)

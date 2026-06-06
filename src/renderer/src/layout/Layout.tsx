@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable prettier/prettier */
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import Sidebar from './Sidebar'
 import Transactions from '../pages/Transactions'
 import Statistics from '../pages/Statistics'
@@ -21,6 +21,38 @@ function Layout(): React.JSX.Element {
   const [configuration, setConfiguration] = useState<ConfigurationRecord[]>([])
   const [databasePath, setDatabasePath] = useState('')
   const [isConfigLoading, setIsConfigLoading] = useState(true)
+
+  const handleConfigurationUpdated = useCallback(
+    (configurationKey: string, configurationValue: string) => {
+      setConfiguration((currentConfiguration) => {
+        const nextConfiguration = currentConfiguration.map((item) => {
+          if (item.configuration_key !== configurationKey) {
+            return item
+          }
+
+          return {
+            ...item,
+            configuration_value: configurationValue
+          }
+        })
+
+        return nextConfiguration
+      })
+    },
+    []
+  )
+
+  const themeMode = useMemo(() => {
+    const themeValue = configuration.find((item) => item.configuration_key === 'THEME')
+    return themeValue?.configuration_value === 'light' ? 'light' : 'dark'
+  }, [configuration])
+
+  useEffect(() => {
+    document.body.dataset.theme = themeMode
+    return () => {
+      delete document.body.dataset.theme
+    }
+  }, [themeMode])
 
   const loadConfiguration = useCallback(async (): Promise<void> => {
     try {
@@ -62,6 +94,7 @@ function Layout(): React.JSX.Element {
             configuration={configuration}
             databasePath={databasePath}
             isLoading={isConfigLoading}
+            onConfigurationUpdated={handleConfigurationUpdated}
           />
         )
       case 'About':
@@ -72,12 +105,13 @@ function Layout(): React.JSX.Element {
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell theme-${themeMode}`}>
       <Sidebar
         isOpen={isNavOpen}
         onToggle={() => setIsNavOpen((prev) => !prev)}
         onNavigate={(p) => setActivePage(p)}
         active={activePage}
+        theme={themeMode}
       />
 
       <main className="main-panel">

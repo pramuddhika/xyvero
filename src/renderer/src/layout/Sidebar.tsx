@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import React from 'react'
-import logo from '../assets/logo.jpeg'
+import logoDark from '../assets/logo.jpeg'
 import { JSX } from 'react/jsx-runtime'
 
 type SidebarProps = {
@@ -8,6 +8,7 @@ type SidebarProps = {
   onToggle: () => void
   onNavigate?: (page: string) => void
   active?: string
+  theme: 'dark' | 'light'
 }
 
 const navItems = [
@@ -58,7 +59,12 @@ const Icons: Record<string, JSX.Element> = {
   )
 }
 
-function Sidebar({ isOpen, onToggle, onNavigate, active }: SidebarProps): React.JSX.Element {
+function Sidebar({ isOpen, onToggle, onNavigate, active, theme }: SidebarProps): React.JSX.Element {
+  const logo =
+    theme === 'light'
+      ? new URL('../../../../resources/icon_light.png', import.meta.url).href
+      : logoDark
+
   return (
     <aside className={`side-nav ${isOpen ? 'open' : 'closed'}`}>
       {isOpen ? (
