@@ -6,6 +6,7 @@ import iconPath from '../../resources/icon.png?asset'
 import {
   getDatabase,
   getDatabasePathForApp,
+  getConfigurationValue,
   listConfiguration,
   setConfigurationValue
 } from './database'
@@ -65,6 +66,9 @@ app.whenReady().then(() => {
   ipcMain.on('ping', () => console.log('pong'))
   ipcMain.handle('db:getPath', () => getDatabasePathForApp())
   ipcMain.handle('db:listConfiguration', () => listConfiguration())
+  ipcMain.handle('db:getConfigurationValue', (_, configurationKey: string) => {
+    return getConfigurationValue(configurationKey)
+  })
   ipcMain.handle('db:setConfigurationValue', (_, configurationKey: string, configurationValue: string) => {
     setConfigurationValue(configurationKey, configurationValue)
   })

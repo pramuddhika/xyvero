@@ -10,6 +10,7 @@ type ConfigurationRecord = {
 interface AppApi {
   getDatabasePath: () => Promise<string>
   listConfiguration: () => Promise<ConfigurationRecord[]>
+  getConfigurationValue: (configurationKey: string) => Promise<ConfigurationRecord | undefined>
   setConfigurationValue: (configurationKey: string, configurationValue: string) => Promise<void>
 }
 

@@ -68,6 +68,23 @@ export function listConfiguration(): ConfigurationRecord[] {
     .all() as ConfigurationRecord[]
 }
 
+export function getConfigurationValue(configurationKey: string): ConfigurationRecord | undefined {
+  const database = getDatabase()
+  return database
+    .prepare(
+      `
+        SELECT
+          configuration_id,
+          configuration_key,
+          configuration_value
+        FROM configuration
+        WHERE configuration_key = ?
+        LIMIT 1
+      `
+    )
+    .get(configurationKey) as ConfigurationRecord | undefined
+}
+
 export function setConfigurationValue(
   configurationKey: string,
   configurationValue: string

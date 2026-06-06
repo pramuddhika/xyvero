@@ -11,6 +11,14 @@ const api = {
       configuration_value: string
     }>
   > => electronAPI.ipcRenderer.invoke('db:listConfiguration'),
+  getConfigurationValue: (configurationKey: string): Promise<
+    | {
+        configuration_id: number
+        configuration_key: string
+        configuration_value: string
+      }
+    | undefined
+  > => electronAPI.ipcRenderer.invoke('db:getConfigurationValue', configurationKey),
   setConfigurationValue: (configurationKey: string, configurationValue: string): Promise<void> =>
     electronAPI.ipcRenderer.invoke('db:setConfigurationValue', configurationKey, configurationValue),
 }

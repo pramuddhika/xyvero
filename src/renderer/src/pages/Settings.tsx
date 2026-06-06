@@ -13,7 +13,6 @@ type SettingsProps = {
   configuration: ConfigurationRecord[]
   databasePath: string
   isLoading: boolean
-  onConfigurationChange: () => Promise<void>
 }
 
 type SelectOption = {
@@ -134,27 +133,48 @@ const selectTheme = (theme: Theme): Theme => ({
   }
 })
 
-function Settings({ configuration, onConfigurationChange }: SettingsProps): React.JSX.Element {
+function Settings({ configuration }: SettingsProps): React.JSX.Element {
   const [savingKey, setSavingKey] = useState<ConfigurationKey | null>(null)
-
-  const configurationRows = configuration
+  const [configurationOverrides, setConfigurationOverrides] = useState<Map<string, string>>(
+    () => new Map()
+  )
 
   const configurationMap = useMemo(() => {
     const map = new Map<string, string>()
-    for (const item of configurationRows) {
+    for (const item of configuration) {
       map.set(item.configuration_key, item.configuration_value)
     }
+    for (const [key, value] of configurationOverrides) {
+      map.set(key, value)
+    }
     return map
-  }, [configurationRows])
+  }, [configuration, configurationOverrides])
 
   const updateConfigurationValue = async (
     configurationKey: ConfigurationKey,
     configurationValue: string
   ): Promise<void> => {
     setSavingKey(configurationKey)
+    setConfigurationOverrides((currentOverrides) => {
+      const nextOverrides = new Map(currentOverrides)
+      nextOverrides.set(configurationKey, configurationValue)
+      return nextOverrides
+    })
+
     try {
       await window.api.setConfigurationValue(configurationKey, configurationValue)
-      await onConfigurationChange()
+
+      const updatedConfiguration = await window.api.getConfigurationValue(configurationKey)
+      if (updatedConfiguration) {
+        setConfigurationOverrides((currentOverrides) => {
+          const nextOverrides = new Map(currentOverrides)
+          nextOverrides.set(
+            updatedConfiguration.configuration_key,
+            updatedConfiguration.configuration_value
+          )
+          return nextOverrides
+        })
+      }
     } finally {
       setSavingKey(null)
     }

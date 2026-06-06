@@ -62,7 +62,6 @@ function Layout(): React.JSX.Element {
             configuration={configuration}
             databasePath={databasePath}
             isLoading={isConfigLoading}
-            onConfigurationChange={loadConfiguration}
           />
         )
       case 'About':
