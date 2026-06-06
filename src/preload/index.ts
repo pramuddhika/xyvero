@@ -1,8 +1,27 @@
+/* eslint-disable prettier/prettier */
 import { contextBridge } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
-// Custom APIs for renderer
-const api = {}
+const api = {
+  getDatabasePath: (): Promise<string> => electronAPI.ipcRenderer.invoke('db:getPath'),
+  listConfiguration: (): Promise<
+    Array<{
+      configuration_id: number
+      configuration_key: string
+      configuration_value: string
+    }>
+  > => electronAPI.ipcRenderer.invoke('db:listConfiguration'),
+  getConfigurationValue: (configurationKey: string): Promise<
+    | {
+        configuration_id: number
+        configuration_key: string
+        configuration_value: string
+      }
+    | undefined
+  > => electronAPI.ipcRenderer.invoke('db:getConfigurationValue', configurationKey),
+  setConfigurationValue: (configurationKey: string, configurationValue: string): Promise<void> =>
+    electronAPI.ipcRenderer.invoke('db:setConfigurationValue', configurationKey, configurationValue),
+}
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

@@ -1,16 +1,26 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+/* eslint-disable prettier/prettier */
+import { app, shell, BrowserWindow, ipcMain, nativeImage } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import iconPath from '../../resources/icon.png?asset'
+import {
+  getDatabase,
+  getDatabasePathForApp,
+  getConfigurationValue,
+  listConfiguration,
+  setConfigurationValue
+} from './database'
+
+const icon = nativeImage.createFromPath(iconPath)
 
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 1320,
+    height: 860,
     show: false,
     autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
+    icon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
@@ -39,8 +49,11 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  // Ensure local SQLite file, tables, and seed data are ready at app startup.
+  getDatabase()
+
   // Set app user model id for windows
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId('com.xyvero')
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.
@@ -51,8 +64,20 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
+  ipcMain.handle('db:getPath', () => getDatabasePathForApp())
+  ipcMain.handle('db:listConfiguration', () => listConfiguration())
+  ipcMain.handle('db:getConfigurationValue', (_, configurationKey: string) => {
+    return getConfigurationValue(configurationKey)
+  })
+  ipcMain.handle('db:setConfigurationValue', (_, configurationKey: string, configurationValue: string) => {
+    setConfigurationValue(configurationKey, configurationValue)
+  })
 
   createWindow()
+
+  if (process.platform === 'darwin' && app.dock) {
+    app.dock.setIcon(icon)
+  }
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
