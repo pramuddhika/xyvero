@@ -134,7 +134,7 @@ const selectTheme = (theme: Theme): Theme => ({
   }
 })
 
-function Settings({ configuration, databasePath, isLoading, onConfigurationChange }: SettingsProps): React.JSX.Element {
+function Settings({ configuration, onConfigurationChange }: SettingsProps): React.JSX.Element {
   const [savingKey, setSavingKey] = useState<ConfigurationKey | null>(null)
 
   const configurationRows = configuration
@@ -196,10 +196,6 @@ function Settings({ configuration, databasePath, isLoading, onConfigurationChang
     <section className="content-area">
         <h3>General Settings</h3>
         <p>Application settings and preferences.</p>
-
-        <div className="db-info">
-          <strong>SQLite path:</strong> <span>{databasePath || 'Loading...'}</span>
-        </div>
 
         <div className="settings-stack">
           <div className="setting-row">
@@ -339,9 +335,6 @@ function Settings({ configuration, databasePath, isLoading, onConfigurationChang
             </div>
           </div>
         </div>
-
-      {isLoading ? <p>Loading configuration...</p> : null}
-
     </section>
   )
 }
