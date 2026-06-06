@@ -81,7 +81,7 @@ function Layout(): React.JSX.Element {
   const renderPage = () => {
     switch (activePage) {
       case 'Transactions':
-        return <Transactions />
+        return <Transactions theme={themeMode} />
       case 'Statistics':
         return <Statistics />
       case 'Accounts':
@@ -100,7 +100,7 @@ function Layout(): React.JSX.Element {
       case 'About':
         return <About />
       default:
-        return <Transactions />
+        return <Transactions theme={themeMode} />
     }
   }
 
