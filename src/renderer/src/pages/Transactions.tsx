@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable prettier/prettier */
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 
 type CalendarEvent = {
   title: string
@@ -60,16 +61,18 @@ function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1)
 }
 
-function startOfCalendarGrid(date: Date): Date {
+function startOfCalendarGrid(date: Date, weekStartIndex = 0): Date {
   const firstDayOfMonth = startOfMonth(date)
+  const firstDow = firstDayOfMonth.getDay()
+  const offset = (firstDow - weekStartIndex + 7) % 7
   const gridStart = new Date(firstDayOfMonth)
-  gridStart.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay())
+  gridStart.setDate(firstDayOfMonth.getDate() - offset)
   return gridStart
 }
 
-function createCalendarCells(monthDate: Date, events: CalendarEvent[]): CalendarCell[] {
+function createCalendarCells(monthDate: Date, events: CalendarEvent[], weekStartIndex = 0): CalendarCell[] {
   const today = new Date()
-  const gridStart = startOfCalendarGrid(monthDate)
+  const gridStart = startOfCalendarGrid(monthDate, weekStartIndex)
   const cells: CalendarCell[] = []
 
   for (let index = 0; index < 42; index += 1) {
@@ -89,9 +92,10 @@ function createCalendarCells(monthDate: Date, events: CalendarEvent[]): Calendar
 
 type TransactionsProps = {
   theme: ThemeMode
+  weekStart?: string
 }
 
-function Transactions({ theme }: TransactionsProps): React.JSX.Element {
+function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Element {
   const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(new Date()))
   const isLightTheme = theme === 'light'
 
@@ -103,10 +107,19 @@ function Transactions({ theme }: TransactionsProps): React.JSX.Element {
     }))
   }, [visibleMonth])
 
+  const computedWeekStartIndex = weekStart && weekStart.toLowerCase() === 'monday' ? 1 : 0
+
   const calendarCells = useMemo(
-    () => createCalendarCells(visibleMonth, calendarEvents),
-    [calendarEvents, visibleMonth]
+    () => createCalendarCells(visibleMonth, calendarEvents, computedWeekStartIndex),
+    [calendarEvents, visibleMonth, computedWeekStartIndex]
   )
+
+  const displayedWeekdayLabels = useMemo(() => {
+    if (computedWeekStartIndex === 0) return weekdayLabels
+    // rotate so Monday is first
+    const rotated = weekdayLabels.slice(1).concat(weekdayLabels[0])
+    return rotated
+  }, [computedWeekStartIndex])
 
   const monthLabel = useMemo(
     () =>
@@ -126,6 +139,29 @@ function Transactions({ theme }: TransactionsProps): React.JSX.Element {
     })
   }
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        setVisibleMonth((currentMonth) => {
+          const next = new Date(currentMonth)
+          next.setMonth(currentMonth.getMonth() - 1)
+          next.setDate(1)
+          return next
+        })
+      } else if (e.key === 'ArrowRight') {
+        setVisibleMonth((currentMonth) => {
+          const next = new Date(currentMonth)
+          next.setMonth(currentMonth.getMonth() + 1)
+          next.setDate(1)
+          return next
+        })
+      }
+    }
+
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
+
   const shellClassName = isLightTheme
     ? 'flex min-h-0 flex-1 flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(54,177,118,0.16),_transparent_30%),linear-gradient(180deg,_#ffffff,_#f1f6f8)] shadow-[0_24px_60px_rgba(15,36,48,0.12)]'
     : 'flex min-h-0 flex-1 flex-col overflow-hidden rounded-[28px] border border-[var(--theme-border)] bg-[radial-gradient(circle_at_top_left,_rgba(54,177,118,0.14),_transparent_28%),linear-gradient(180deg,_rgba(12,31,40,0.98),_rgba(8,19,26,0.98))] shadow-[0_28px_70px_rgba(0,0,0,0.28)]'
@@ -134,9 +170,10 @@ function Transactions({ theme }: TransactionsProps): React.JSX.Element {
     ? 'flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 px-5 py-4 sm:px-6'
     : 'flex flex-wrap items-center justify-between gap-4 border-b border-white/10 px-5 py-4 sm:px-6'
 
-  const buttonClassName = isLightTheme
-    ? 'rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:border-slate-300 hover:bg-slate-50'
-    : 'rounded-full border border-white/12 bg-white/6 px-4 py-2 text-sm font-semibold text-[var(--theme-text-strong)] transition hover:border-white/20 hover:bg-white/10'
+
+  const iconButtonClassName = isLightTheme
+    ? 'inline-flex items-center justify-center h-9 w-9 p-0 rounded-md border border-slate-200 bg-white text-slate-800 transition hover:bg-slate-50'
+    : 'inline-flex items-center justify-center h-9 w-9 p-0 rounded-md border border-white/12 bg-transparent text-[var(--theme-text-strong)] transition hover:bg-white/6'
 
   const panelClassName = isLightTheme
     ? 'mt-px grid min-h-0 flex-1 grid-cols-7 grid-rows-6 gap-px overflow-hidden rounded-b-3xl border border-t-0 border-slate-200 bg-slate-200/80'
@@ -145,45 +182,63 @@ function Transactions({ theme }: TransactionsProps): React.JSX.Element {
   return (
       <div className={shellClassName}>
         <div className={topBarClassName}>
-          <div className="min-w-0">
-            <p
-              className={`text-xs font-semibold uppercase tracking-[0.24em] ${
-                isLightTheme ? 'text-slate-500' : 'text-[var(--theme-text-muted)]'
-              }`}
+          <div className="min-w-0 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigateMonth(-1)}
+              aria-label="Previous month"
+              className={iconButtonClassName}
+              title="Previous month"
             >
-              Calendar
-            </p>
-            <h2
-              className={`mt-2 text-2xl font-semibold tracking-tight sm:text-3xl ${
-                isLightTheme ? 'text-slate-900' : 'text-[var(--theme-text-strong)]'
-              }`}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                <path fillRule="evenodd" d="M12.293 15.707a1 1 0 0 1-1.414 0l-5-5a1 1 0 0 1 0-1.414l5-5a1 1 0 1 1 1.414 1.414L8.414 10l3.879 3.879a1 1 0 0 1 0 1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+
+            <div>
+              <h2 className={`mt-2 text-2xl font-semibold tracking-tight sm:text-3xl ${isLightTheme ? 'text-slate-900' : 'text-[var(--theme-text-strong)]'}`}>
+                {monthLabel}
+              </h2>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => navigateMonth(1)}
+              aria-label="Next month"
+              className={iconButtonClassName}
+              title="Next month"
             >
-              {monthLabel}
-            </h2>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 0 1 0-1.414L10.586 10 7.293 6.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0z" clipRule="evenodd" />
+              </svg>
+            </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={() => setVisibleMonth(startOfMonth(new Date()))} className={buttonClassName}>
-              Today
-            </button>
-            <button type="button" onClick={() => navigateMonth(-1)} className={buttonClassName}>
-              Back
-            </button>
-            <button type="button" onClick={() => navigateMonth(1)} className={buttonClassName}>
-              Next
+            <button
+              type="button"
+              onClick={() => setVisibleMonth(startOfMonth(new Date()))}
+              className={iconButtonClassName}
+              title="Go to current month"
+              aria-label="Go to current month"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <path d="M16 2v4M8 2v4" />
+              </svg>
             </button>
           </div>
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-5">
           <div
-            className={`grid grid-cols-7 gap-px rounded-2xl border text-center text-[11px] font-semibold uppercase tracking-[0.22em] ${
+            className={`grid grid-cols-7 gap-px rounded-t-2xl border text-center text-[11px] font-semibold uppercase tracking-[0.22em] ${
               isLightTheme
                 ? 'border-slate-200 bg-slate-200 text-slate-500'
                 : 'border-white/10 bg-white/10 text-[var(--theme-text-muted)]'
             }`}
           >
-            {weekdayLabels.map((weekday) => (
+            {displayedWeekdayLabels.map((weekday) => (
               <div
                 key={weekday}
                 className={isLightTheme ? 'bg-white px-2 py-3' : 'bg-[rgba(255,255,255,0.03)] px-2 py-3'}

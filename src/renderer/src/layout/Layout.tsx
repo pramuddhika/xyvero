@@ -80,8 +80,11 @@ function Layout(): React.JSX.Element {
 
   const renderPage = () => {
     switch (activePage) {
-      case 'Transactions':
-        return <Transactions theme={themeMode} />
+      case 'Transactions': {
+        const weekStartValue = configuration.find((item) => item.configuration_key === 'WEEK_START_DATE')
+        const resolvedWeekStart = weekStartValue?.configuration_value ?? 'Sunday'
+        return <Transactions theme={themeMode} weekStart={resolvedWeekStart} />
+      }
       case 'Statistics':
         return <Statistics />
       case 'Accounts':
@@ -99,8 +102,11 @@ function Layout(): React.JSX.Element {
         )
       case 'About':
         return <About />
-      default:
-        return <Transactions theme={themeMode} />
+      default: {
+        const weekStartValue = configuration.find((item) => item.configuration_key === 'WEEK_START_DATE')
+        const resolvedWeekStart = weekStartValue?.configuration_value ?? 'Sunday'
+        return <Transactions theme={themeMode} weekStart={resolvedWeekStart} />
+      }
     }
   }
 
