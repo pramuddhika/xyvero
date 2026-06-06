@@ -344,6 +344,7 @@ function Settings({ configuration }: SettingsProps): React.JSX.Element {
                     }}
                     styles={selectStyles}
                     theme={selectTheme}
+                    menuPlacement="top"
                     isSearchable={false}
                     isDisabled={savingKey === 'THEME'}
                     placeholder="Select theme"
