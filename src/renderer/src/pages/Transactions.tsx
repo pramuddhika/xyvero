@@ -171,9 +171,17 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
     : 'flex flex-wrap items-center justify-between gap-4 border-b border-white/10 px-5 py-4 sm:px-6'
 
 
-  const iconButtonClassName = isLightTheme
-    ? 'inline-flex items-center justify-center h-9 w-9 p-0 rounded-md border border-slate-200 bg-white text-slate-800 transition hover:bg-slate-50'
-    : 'inline-flex items-center justify-center h-9 w-9 p-0 rounded-md border border-white/12 bg-transparent text-[var(--theme-text-strong)] transition hover:bg-white/6'
+  const monthActionButtonClassName = isLightTheme
+    ? 'inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60'
+    : 'inline-flex min-h-11 items-center gap-2 rounded-full border border-white/12 bg-[rgba(255,255,255,0.04)] px-4 py-2 text-sm font-semibold text-(--theme-text-strong) shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition hover:border-white/20 hover:bg-white/8 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60'
+
+  const monthStepperClassName = isLightTheme
+    ? 'inline-flex overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm'
+    : 'inline-flex overflow-hidden rounded-full border border-white/12 bg-[rgba(255,255,255,0.04)] shadow-[0_10px_24px_rgba(0,0,0,0.18)]'
+
+  const monthStepperButtonClassName = isLightTheme
+    ? 'inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60'
+    : 'inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold text-(--theme-text-strong) transition hover:bg-white/8 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60'
 
   const panelClassName = isLightTheme
     ? 'mt-px grid min-h-0 flex-1 grid-cols-7 grid-rows-6 gap-px overflow-hidden rounded-b-3xl border border-t-0 border-slate-200 bg-slate-200/80'
@@ -182,43 +190,17 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
   return (
       <div className={shellClassName}>
         <div className={topBarClassName}>
-          <div className="min-w-0 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => navigateMonth(-1)}
-              aria-label="Previous month"
-              className={iconButtonClassName}
-              title="Previous month"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                <path fillRule="evenodd" d="M12.293 15.707a1 1 0 0 1-1.414 0l-5-5a1 1 0 0 1 0-1.414l5-5a1 1 0 1 1 1.414 1.414L8.414 10l3.879 3.879a1 1 0 0 1 0 1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
-
-            <div>
-              <h2 className={`mt-2 text-2xl font-semibold tracking-tight sm:text-3xl ${isLightTheme ? 'text-slate-900' : 'text-[var(--theme-text-strong)]'}`}>
-                {monthLabel}
-              </h2>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => navigateMonth(1)}
-              aria-label="Next month"
-              className={iconButtonClassName}
-              title="Next month"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                <path fillRule="evenodd" d="M7.293 14.707a1 1 0 0 1 0-1.414L10.586 10 7.293 6.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0z" clipRule="evenodd" />
-              </svg>
-            </button>
+          <div className="min-w-0">
+            <h2 className={`text-2xl font-semibold tracking-tight sm:text-3xl ${isLightTheme ? 'text-slate-900' : 'text-(--theme-text-strong)'}`}>
+              {monthLabel}
+            </h2>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => setVisibleMonth(startOfMonth(new Date()))}
-              className={iconButtonClassName}
+              className={monthActionButtonClassName}
               title="Go to current month"
               aria-label="Go to current month"
             >
@@ -226,7 +208,38 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
                 <path d="M16 2v4M8 2v4" />
               </svg>
+              <span>Today</span>
             </button>
+
+            <div className={monthStepperClassName} aria-label="Month navigation">
+              <button
+                type="button"
+                onClick={() => navigateMonth(-1)}
+                aria-label="Previous month"
+                className={monthStepperButtonClassName}
+                title="Previous month"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                  <path fillRule="evenodd" d="M12.293 15.707a1 1 0 0 1-1.414 0l-5-5a1 1 0 0 1 0-1.414l5-5a1 1 0 1 1 1.414 1.414L8.414 10l3.879 3.879a1 1 0 0 1 0 1.414z" clipRule="evenodd" />
+                </svg>
+                <span>Prev</span>
+              </button>
+
+              <div className={isLightTheme ? 'w-px bg-slate-200' : 'w-px bg-white/12'} aria-hidden="true" />
+
+              <button
+                type="button"
+                onClick={() => navigateMonth(1)}
+                aria-label="Next month"
+                className={monthStepperButtonClassName}
+                title="Next month"
+              >
+                <span>Next</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 0 1 0-1.414L10.586 10 7.293 6.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -234,8 +247,8 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
           <div
             className={`grid grid-cols-7 gap-px rounded-t-2xl border text-center text-[11px] font-semibold uppercase tracking-[0.22em] ${
               isLightTheme
-                ? 'border-slate-200 bg-slate-200 text-slate-500'
-                : 'border-white/10 bg-white/10 text-[var(--theme-text-muted)]'
+                ? 'overflow-hidden border-slate-200 bg-white text-slate-500 shadow-sm ring-1 ring-slate-200/70'
+                : 'border-white/10 bg-white/10 text-(--theme-text-muted)'
             }`}
           >
             {displayedWeekdayLabels.map((weekday) => (
@@ -258,7 +271,7 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
                   cell.isCurrentMonth
                     ? isLightTheme
                       ? 'text-slate-900'
-                      : 'text-[var(--theme-text-strong)]'
+                      : 'text-(--theme-text-strong)'
                     : isLightTheme
                       ? 'text-slate-300'
                       : 'text-white/35'
