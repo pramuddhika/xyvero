@@ -26,6 +26,11 @@ $ npm run dev
 # For windows
 $ npm run build:win
 
+# Build the Windows installer and copy the EXE to a custom path
+$ npm run build:installer:win -- --output D:\\Installers
+
+# The script stages resources/icon.png into build/icon.png before packaging
+
 # For macOS
 $ npm run build:mac
 

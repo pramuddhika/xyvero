@@ -17,6 +17,7 @@
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
+    "build:installer:win": "node ./scripts/build-installer.mjs",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux"
   },
@@ -26,6 +27,7 @@
     "@tailwindcss/vite": "^4.3.0",
     "better-sqlite3": "^12.10.0",
     "currency-codes": "^2.2.0",
+    "rcedit": "^5.0.2",
     "react-select": "^5.10.2",
     "tailwindcss": "^4.3.0"
   },
