@@ -35,6 +35,14 @@ function createTables(database: Database.Database): void {
       category_type VARCHAR(100) NOT NULL,
       category_name VARCHAR(100) NOT NULL UNIQUE
     );
+    CREATE TABLE IF NOT EXISTS category (
+      category_id INTEGER PRIMARY KEY,
+      category_name VARCHAR(100) NOT NULL,
+      category_amount INTEGER NOT NULL DEFAULT 0,
+      category_group_id INTEGER NOT NULL REFERENCES categoryTypes(category_id),
+      category_icon VARCHAR(100) NOT NULL DEFAULT 'circle',
+      category_colour VARCHAR(7) NOT NULL DEFAULT '#6366f1'
+    );
   `)
  
   database.exec(`
@@ -69,6 +77,7 @@ export function getDatabase(): Database.Database {
   }
 
   db = new Database(getDatabasePath())
+  db.pragma('foreign_keys = ON')
   createTables(db)
   return db
 }
