@@ -27,6 +27,7 @@
     "@tailwindcss/vite": "^4.3.0",
     "better-sqlite3": "^12.10.0",
     "currency-codes": "^2.2.0",
+    "lucide-react": "^1.20.0",
     "rcedit": "^5.0.2",
     "react-select": "^5.10.2",
     "tailwindcss": "^4.3.0"
