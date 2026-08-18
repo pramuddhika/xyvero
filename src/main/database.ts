@@ -10,6 +10,12 @@ export type ConfigurationRecord = {
   configuration_value: string
 }
 
+export type AccountTypeRecord = {
+  account_type_id: number
+  account_type: string
+  account_type_name: string
+}
+
 let db: Database.Database | null = null
 
 function getDatabasePath(): string {
@@ -134,4 +140,20 @@ export function setConfigurationValue(
       `
     )
     .run(configurationKey, configurationValue)
+}
+
+export function listAccountTypes(): AccountTypeRecord[] {
+  const database = getDatabase()
+  return database
+    .prepare(
+      `
+        SELECT
+          account_type_id,
+          account_type,
+          account_type_name
+        FROM accountTypes
+        ORDER BY account_type_id ASC
+      `
+    )
+    .all() as AccountTypeRecord[]
 }

@@ -7,6 +7,7 @@ import {
   getDatabase,
   getDatabasePathForApp,
   getConfigurationValue,
+  listAccountTypes,
   listConfiguration,
   setConfigurationValue
 } from './database'
@@ -72,6 +73,7 @@ app.whenReady().then(() => {
   ipcMain.handle('db:setConfigurationValue', (_, configurationKey: string, configurationValue: string) => {
     setConfigurationValue(configurationKey, configurationValue)
   })
+  ipcMain.handle('db:listAccountTypes', () => listAccountTypes())
 
   createWindow()
 

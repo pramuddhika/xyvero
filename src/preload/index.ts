@@ -21,6 +21,13 @@ const api = {
   > => electronAPI.ipcRenderer.invoke('db:getConfigurationValue', configurationKey),
   setConfigurationValue: (configurationKey: string, configurationValue: string): Promise<void> =>
     electronAPI.ipcRenderer.invoke('db:setConfigurationValue', configurationKey, configurationValue),
+  listAccountTypes: (): Promise<
+    Array<{
+      account_type_id: number
+      account_type: string
+      account_type_name: string
+    }>
+  > => electronAPI.ipcRenderer.invoke('db:listAccountTypes'),
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

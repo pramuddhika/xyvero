@@ -7,11 +7,18 @@ type ConfigurationRecord = {
   configuration_value: string
 }
 
+type AccountTypeRecord = {
+  account_type_id: number
+  account_type: string
+  account_type_name: string
+}
+
 interface AppApi {
   getDatabasePath: () => Promise<string>
   listConfiguration: () => Promise<ConfigurationRecord[]>
   getConfigurationValue: (configurationKey: string) => Promise<ConfigurationRecord | undefined>
   setConfigurationValue: (configurationKey: string, configurationValue: string) => Promise<void>
+  listAccountTypes: () => Promise<AccountTypeRecord[]>
 }
 
 declare global {

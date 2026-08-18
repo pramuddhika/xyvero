@@ -174,6 +174,10 @@ function Settings({ configuration, onConfigurationUpdated }: SettingsProps): Rea
     })
     onConfigurationUpdated(configurationKey, configurationValue)
 
+    if (!window.api?.setConfigurationValue || !window.api?.getConfigurationValue) {
+      return
+    }
+
     try {
       await window.api.setConfigurationValue(configurationKey, configurationValue)
 

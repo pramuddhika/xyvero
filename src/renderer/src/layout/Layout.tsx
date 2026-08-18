@@ -55,6 +55,10 @@ function Layout(): React.JSX.Element {
   }, [themeMode])
 
   const loadConfiguration = useCallback(async (): Promise<void> => {
+    if (!window.api?.getDatabasePath || !window.api?.listConfiguration) {
+      setIsConfigLoading(false)
+      return
+    }
     try {
       const [path, rows] = await Promise.all([
         window.api.getDatabasePath(),
@@ -63,6 +67,8 @@ function Layout(): React.JSX.Element {
 
       setDatabasePath(path)
       setConfiguration(rows)
+    } catch (error) {
+      console.error('Failed to load configuration:', error)
     } finally {
       setIsConfigLoading(false)
     }
