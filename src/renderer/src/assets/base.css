@@ -30,6 +30,59 @@
   --color-background-mute: var(--ev-c-black-mute);
 
   --color-text: var(--ev-c-text-1);
+
+  --theme-sidebar-start: #13323e;
+  --theme-sidebar-end: #0c1f28;
+  --theme-surface: rgba(255, 255, 255, 0.038);
+  --theme-surface-strong: rgba(255, 255, 255, 0.045);
+  --theme-surface-soft: rgba(255, 255, 255, 0.03);
+  --theme-border: rgba(255, 255, 255, 0.075);
+  --theme-border-soft: rgba(255, 255, 255, 0.08);
+  --theme-text-strong: #f2faf5;
+  --theme-text: rgba(234, 246, 239, 0.78);
+  --theme-text-muted: rgba(234, 246, 239, 0.68);
+  --theme-control-bg: rgba(255, 255, 255, 0.06);
+  --theme-control-bg-soft: rgba(255, 255, 255, 0.02);
+  --theme-control-hover: rgba(54, 177, 118, 0.18);
+  --theme-control-active: rgba(54, 177, 118, 0.24);
+  --theme-control-border: rgba(255, 255, 255, 0.12);
+  --theme-item-bg: rgba(255, 255, 255, 0.06);
+  --theme-item-hover: rgba(54, 177, 118, 0.14);
+  --theme-chip-bg: rgba(255, 255, 255, 0.04);
+  --theme-logo-border: rgba(255, 255, 255, 0.14);
+  --theme-accent-border: rgba(54, 177, 118, 0.28);
+  --theme-accent-soft: rgba(54, 177, 118, 0.12);
+  --theme-accent-text: #d9fae5;
+}
+
+body[data-theme='light'] {
+  --color-background: #f3f7f8;
+  --color-background-soft: #ffffff;
+  --color-background-mute: #e7edf0;
+  --color-text: rgba(16, 34, 42, 0.96);
+
+  --theme-sidebar-start: #ffffff;
+  --theme-sidebar-end: #eef4f6;
+  --theme-surface: rgba(255, 255, 255, 0.86);
+  --theme-surface-strong: rgba(255, 255, 255, 0.94);
+  --theme-surface-soft: rgba(255, 255, 255, 0.74);
+  --theme-border: rgba(18, 48, 58, 0.08);
+  --theme-border-soft: rgba(18, 48, 58, 0.1);
+  --theme-text-strong: #10222a;
+  --theme-text: rgba(16, 34, 42, 0.78);
+  --theme-text-muted: rgba(16, 34, 42, 0.62);
+  --theme-control-bg: rgba(245, 249, 251, 0.92);
+  --theme-control-bg-soft: rgba(245, 249, 251, 0.78);
+  --theme-control-hover: rgba(54, 177, 118, 0.12);
+  --theme-control-active: rgba(54, 177, 118, 0.18);
+  --theme-control-border: rgba(18, 48, 58, 0.12);
+  --theme-item-bg: rgba(18, 48, 58, 0.03);
+  --theme-item-hover: rgba(54, 177, 118, 0.12);
+  --theme-chip-bg: rgba(18, 48, 58, 0.04);
+  --theme-logo-border: rgba(18, 48, 58, 0.12);
+  --theme-accent-border: rgba(54, 177, 118, 0.22);
+  --theme-accent-soft: rgba(54, 177, 118, 0.12);
+  --theme-accent-text: #163c28;
 }
 
 *,

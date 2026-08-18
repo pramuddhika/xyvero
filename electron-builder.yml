@@ -13,6 +13,10 @@ asarUnpack:
   - resources/**
 win:
   executableName: xyvero
+  signAndEditExecutable: false
+  signExts:
+    - '!.exe'
+    - '!.dll'
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

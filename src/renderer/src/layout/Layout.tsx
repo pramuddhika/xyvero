@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable prettier/prettier */
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import Sidebar from './Sidebar'
 import Transactions from '../pages/Transactions'
 import Statistics from '../pages/Statistics'
@@ -22,7 +23,43 @@ function Layout(): React.JSX.Element {
   const [databasePath, setDatabasePath] = useState('')
   const [isConfigLoading, setIsConfigLoading] = useState(true)
 
+  const handleConfigurationUpdated = useCallback(
+    (configurationKey: string, configurationValue: string) => {
+      setConfiguration((currentConfiguration) => {
+        const nextConfiguration = currentConfiguration.map((item) => {
+          if (item.configuration_key !== configurationKey) {
+            return item
+          }
+
+          return {
+            ...item,
+            configuration_value: configurationValue
+          }
+        })
+
+        return nextConfiguration
+      })
+    },
+    []
+  )
+
+  const themeMode = useMemo(() => {
+    const themeValue = configuration.find((item) => item.configuration_key === 'THEME')
+    return themeValue?.configuration_value === 'light' ? 'light' : 'dark'
+  }, [configuration])
+
+  useEffect(() => {
+    document.body.dataset.theme = themeMode
+    return () => {
+      delete document.body.dataset.theme
+    }
+  }, [themeMode])
+
   const loadConfiguration = useCallback(async (): Promise<void> => {
+    if (!window.api?.getDatabasePath || !window.api?.listConfiguration) {
+      setIsConfigLoading(false)
+      return
+    }
     try {
       const [path, rows] = await Promise.all([
         window.api.getDatabasePath(),
@@ -31,6 +68,8 @@ function Layout(): React.JSX.Element {
 
       setDatabasePath(path)
       setConfiguration(rows)
+    } catch (error) {
+      console.error('Failed to load configuration:', error)
     } finally {
       setIsConfigLoading(false)
     }
@@ -48,8 +87,11 @@ function Layout(): React.JSX.Element {
 
   const renderPage = () => {
     switch (activePage) {
-      case 'Transactions':
-        return <Transactions />
+      case 'Transactions': {
+        const weekStartValue = configuration.find((item) => item.configuration_key === 'WEEK_START_DATE')
+        const resolvedWeekStart = weekStartValue?.configuration_value ?? 'Sunday'
+        return <Transactions theme={themeMode} weekStart={resolvedWeekStart} />
+      }
       case 'Statistics':
         return <Statistics />
       case 'Accounts':
@@ -62,22 +104,27 @@ function Layout(): React.JSX.Element {
             configuration={configuration}
             databasePath={databasePath}
             isLoading={isConfigLoading}
+            onConfigurationUpdated={handleConfigurationUpdated}
           />
         )
       case 'About':
         return <About />
-      default:
-        return <Transactions />
+      default: {
+        const weekStartValue = configuration.find((item) => item.configuration_key === 'WEEK_START_DATE')
+        const resolvedWeekStart = weekStartValue?.configuration_value ?? 'Sunday'
+        return <Transactions theme={themeMode} weekStart={resolvedWeekStart} />
+      }
     }
   }
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell theme-${themeMode}`}>
       <Sidebar
         isOpen={isNavOpen}
         onToggle={() => setIsNavOpen((prev) => !prev)}
         onNavigate={(p) => setActivePage(p)}
         active={activePage}
+        theme={themeMode}
       />
 
       <main className="main-panel">

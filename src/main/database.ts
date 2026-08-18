@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { app } from 'electron'
+import electron from 'electron'
 import Database from 'better-sqlite3'
 import { mkdirSync } from 'fs'
 import { join } from 'path'
@@ -10,10 +10,31 @@ export type ConfigurationRecord = {
   configuration_value: string
 }
 
+export type AccountTypeRecord = {
+  account_type_id: number
+  account_type: string
+  account_type_name: string
+}
+
 let db: Database.Database | null = null
 
+type AppLike = {
+  getPath: (name: 'userData' | string) => string
+}
+
+function getElectronApp(): AppLike | undefined {
+  if (typeof electron === 'object' && electron !== null) {
+    const pkg = electron as unknown as { app?: AppLike; default?: { app?: AppLike } }
+    return pkg.app || pkg.default?.app
+  }
+  return undefined
+}
+
 function getDatabasePath(): string {
-  const dataDir = app.getPath('userData')
+  const app = getElectronApp()
+  const dataDir = app?.getPath
+    ? app.getPath('userData')
+    : join(process.env.APPDATA || process.env.HOME || process.cwd(), 'xyvero')
   mkdirSync(dataDir, { recursive: true })
   return join(dataDir, 'xyvero.sqlite')
 }
@@ -24,9 +45,27 @@ function createTables(database: Database.Database): void {
       configuration_id INTEGER PRIMARY KEY,
       configuration_key VARCHAR(200) NOT NULL UNIQUE,
       configuration_value VARCHAR(100) NOT NULL
-    )
+    );
+    CREATE TABLE IF NOT EXISTS accountTypes (
+      account_type_id INTEGER PRIMARY KEY,
+      account_type VARCHAR(100) NOT NULL,
+      account_type_name VARCHAR(100) NOT NULL UNIQUE
+    );
+    CREATE TABLE IF NOT EXISTS categoryTypes (
+      category_id INTEGER PRIMARY KEY,
+      category_type VARCHAR(100) NOT NULL,
+      category_name VARCHAR(100) NOT NULL UNIQUE
+    );
+    CREATE TABLE IF NOT EXISTS category (
+      category_id INTEGER PRIMARY KEY,
+      category_name VARCHAR(100) NOT NULL,
+      category_amount INTEGER NOT NULL DEFAULT 0,
+      category_group_id INTEGER NOT NULL REFERENCES categoryTypes(category_id),
+      category_icon VARCHAR(100) NOT NULL DEFAULT 'circle',
+      category_colour VARCHAR(7) NOT NULL DEFAULT '#6366f1'
+    );
   `)
-
+ 
   database.exec(`
     INSERT OR IGNORE INTO configuration (configuration_id, configuration_key, configuration_value)
     VALUES
@@ -34,7 +73,22 @@ function createTables(database: Database.Database): void {
       (2, 'MONTH_START_DATE', '1'),
       (3, 'WEEK_START_DATE', 'Monday'),
       (4, 'THEME', 'dark'),
-      (5, 'FIRST_VIEW', 'Calendar')
+      (5, 'FIRST_VIEW', 'Calendar');
+
+    INSERT OR IGNORE INTO accountTypes (account_type_id, account_type, account_type_name)
+    VALUES
+      (1, 'CASH', 'Cash'),
+      (2, 'ACCOUNT', 'Accounts'),
+      (3, 'SAVING', 'Savings'),
+      (4, 'INVESTMENT', 'Investments'),
+      (5, 'LOAN', 'Loans'),
+      (6, 'CARD', 'Cards'),
+      (7, 'OTHER', 'Other');
+
+    INSERT OR IGNORE INTO categoryTypes (category_id, category_type, category_name)
+    VALUES
+      (1, 'IN', 'In'),
+      (2, 'OUT', 'Out');
   `)
 }
 
@@ -44,6 +98,7 @@ export function getDatabase(): Database.Database {
   }
 
   db = new Database(getDatabasePath())
+  db.pragma('foreign_keys = ON')
   createTables(db)
   return db
 }
@@ -100,4 +155,20 @@ export function setConfigurationValue(
       `
     )
     .run(configurationKey, configurationValue)
+}
+
+export function listAccountTypes(): AccountTypeRecord[] {
+  const database = getDatabase()
+  return database
+    .prepare(
+      `
+        SELECT
+          account_type_id,
+          account_type,
+          account_type_name
+        FROM accountTypes
+        ORDER BY account_type_id ASC
+      `
+    )
+    .all() as AccountTypeRecord[]
 }
