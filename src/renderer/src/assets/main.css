@@ -697,3 +697,98 @@ code {
     display: none;
   }
 }
+
+.accounts-page {
+  gap: 20px;
+}
+
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.account-type-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: var(--theme-surface-soft);
+  border: 1px solid var(--theme-border-soft);
+  border-radius: 14px;
+  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+  cursor: pointer;
+}
+
+.account-type-card:hover {
+  border-color: var(--theme-border);
+  background: var(--theme-surface-strong);
+  transform: translateY(-2px);
+}
+
+.account-type-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--theme-chip-bg);
+  color: var(--theme-text-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--theme-border-soft);
+}
+
+.account-type-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.account-type-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.account-type-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--theme-text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.account-type-id-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--theme-chip-bg);
+  color: var(--theme-text-muted);
+  border: 1px solid var(--theme-border-soft);
+}
+
+.account-type-code {
+  font-size: 12px;
+  color: var(--theme-text-muted);
+  font-family: ui-monospace, monospace;
+}
+
+.account-loading-state,
+.account-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 16px;
+  color: var(--theme-text-muted);
+  font-size: 14px;
+}
+

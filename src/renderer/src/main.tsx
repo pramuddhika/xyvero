@@ -1,4 +1,5 @@
 /* eslint-disable prettier/prettier */
+import './api-bridge'
 import './assets/main.css'
 
 import { StrictMode } from 'react'

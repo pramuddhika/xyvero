@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable prettier/prettier */
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import Sidebar from './Sidebar'

@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { app } from 'electron'
+import electron from 'electron'
 import Database from 'better-sqlite3'
 import { mkdirSync } from 'fs'
 import { join } from 'path'
@@ -18,8 +18,23 @@ export type AccountTypeRecord = {
 
 let db: Database.Database | null = null
 
+type AppLike = {
+  getPath: (name: 'userData' | string) => string
+}
+
+function getElectronApp(): AppLike | undefined {
+  if (typeof electron === 'object' && electron !== null) {
+    const pkg = electron as unknown as { app?: AppLike; default?: { app?: AppLike } }
+    return pkg.app || pkg.default?.app
+  }
+  return undefined
+}
+
 function getDatabasePath(): string {
-  const dataDir = app.getPath('userData')
+  const app = getElectronApp()
+  const dataDir = app?.getPath
+    ? app.getPath('userData')
+    : join(process.env.APPDATA || process.env.HOME || process.cwd(), 'xyvero')
   mkdirSync(dataDir, { recursive: true })
   return join(dataDir, 'xyvero.sqlite')
 }
