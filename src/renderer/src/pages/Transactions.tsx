@@ -70,7 +70,11 @@ function startOfCalendarGrid(date: Date, weekStartIndex = 0): Date {
   return gridStart
 }
 
-function createCalendarCells(monthDate: Date, events: CalendarEvent[], weekStartIndex = 0): CalendarCell[] {
+function createCalendarCells(
+  monthDate: Date,
+  events: CalendarEvent[],
+  weekStartIndex = 0
+): CalendarCell[] {
   const today = new Date()
   const gridStart = startOfCalendarGrid(monthDate, weekStartIndex)
   const cells: CalendarCell[] = []
@@ -170,7 +174,6 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
     ? 'flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 px-5 py-4 sm:px-6'
     : 'flex flex-wrap items-center justify-between gap-4 border-b border-white/10 px-5 py-4 sm:px-6'
 
-
   const monthActionButtonClassName = isLightTheme
     ? 'inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60'
     : 'inline-flex min-h-11 items-center gap-2 rounded-full border border-white/12 bg-[rgba(255,255,255,0.04)] px-4 py-2 text-sm font-semibold text-(--theme-text-strong) shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition hover:border-white/20 hover:bg-white/8 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60'
@@ -188,155 +191,194 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
     : 'mt-px grid min-h-0 flex-1 grid-cols-7 grid-rows-6 gap-px overflow-hidden rounded-b-3xl border border-t-0 border-white/10 bg-white/10'
 
   return (
-      <div className={shellClassName}>
-        <div className={topBarClassName}>
-          <div className="min-w-0">
-            <h2 className={`text-2xl font-semibold tracking-tight sm:text-3xl ${isLightTheme ? 'text-slate-900' : 'text-(--theme-text-strong)'}`}>
-              {monthLabel}
-            </h2>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setVisibleMonth(startOfMonth(new Date()))}
-              className={monthActionButtonClassName}
-              title="Go to current month"
-              aria-label="Go to current month"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                <path d="M16 2v4M8 2v4" />
-              </svg>
-              <span>Today</span>
-            </button>
-
-            <div className={monthStepperClassName} aria-label="Month navigation">
-              <button
-                type="button"
-                onClick={() => navigateMonth(-1)}
-                aria-label="Previous month"
-                className={monthStepperButtonClassName}
-                title="Previous month"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                  <path fillRule="evenodd" d="M12.293 15.707a1 1 0 0 1-1.414 0l-5-5a1 1 0 0 1 0-1.414l5-5a1 1 0 1 1 1.414 1.414L8.414 10l3.879 3.879a1 1 0 0 1 0 1.414z" clipRule="evenodd" />
-                </svg>
-                <span>Prev</span>
-              </button>
-
-              <div className={isLightTheme ? 'w-px bg-slate-200' : 'w-px bg-white/12'} aria-hidden="true" />
-
-              <button
-                type="button"
-                onClick={() => navigateMonth(1)}
-                aria-label="Next month"
-                className={monthStepperButtonClassName}
-                title="Next month"
-              >
-                <span>Next</span>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
-                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 0 1 0-1.414L10.586 10 7.293 6.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0z" clipRule="evenodd" />
-                </svg>
-              </button>
-            </div>
-          </div>
+    <div className={shellClassName}>
+      <div className={topBarClassName}>
+        <div className="min-w-0">
+          <h2
+            className={`text-2xl font-semibold tracking-tight sm:text-3xl ${isLightTheme ? 'text-slate-900' : 'text-(--theme-text-strong)'}`}
+          >
+            {monthLabel}
+          </h2>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-5">
-          <div
-            className={`grid grid-cols-7 gap-px rounded-t-2xl border text-center text-[11px] font-semibold uppercase tracking-[0.22em] ${
-              isLightTheme
-                ? 'overflow-hidden border-slate-200 bg-white text-slate-500 shadow-sm ring-1 ring-slate-200/70'
-                : 'border-white/10 bg-white/10 text-(--theme-text-muted)'
-            }`}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setVisibleMonth(startOfMonth(new Date()))}
+            className={monthActionButtonClassName}
+            title="Go to current month"
+            aria-label="Go to current month"
           >
-            {displayedWeekdayLabels.map((weekday) => (
-              <div
-                key={weekday}
-                className={isLightTheme ? 'bg-white px-2 py-3' : 'bg-[rgba(255,255,255,0.03)] px-2 py-3'}
-              >
-                {weekday}
-              </div>
-            ))}
-          </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              className="h-5 w-5"
+            >
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <path d="M16 2v4M8 2v4" />
+            </svg>
+            <span>Today</span>
+          </button>
 
-          <div className={panelClassName}>
-            {calendarCells.map((cell) => (
-              <div
-                key={cell.date.toISOString()}
-                className={`relative flex min-h-0 flex-col overflow-hidden p-3 transition ${
-                  isLightTheme ? 'bg-white' : 'bg-[rgba(255,255,255,0.03)]'
-                } ${
-                  cell.isCurrentMonth
-                    ? isLightTheme
-                      ? 'text-slate-900'
-                      : 'text-(--theme-text-strong)'
-                    : isLightTheme
-                      ? 'text-slate-300'
-                      : 'text-white/35'
-                } ${
-                  cell.isToday
-                    ? isLightTheme
-                      ? 'bg-emerald-50 ring-1 ring-inset ring-emerald-300/50'
-                      : 'bg-emerald-400/12 ring-1 ring-inset ring-emerald-300/30'
-                    : ''
-                }`}
+          <div className={monthStepperClassName} aria-label="Month navigation">
+            <button
+              type="button"
+              onClick={() => navigateMonth(-1)}
+              aria-label="Previous month"
+              className={monthStepperButtonClassName}
+              title="Previous month"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="h-4 w-4"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <span className={`text-sm font-semibold sm:text-base ${isLightTheme ? 'text-slate-900' : ''}`}>
-                    {cell.date.getDate().toString().padStart(2, '0')}
-                  </span>
-                  {cell.isToday ? (
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${
-                        isLightTheme
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-emerald-400/20 text-emerald-50'
-                      }`}
-                    >
-                      Today
-                    </span>
-                  ) : null}
-                </div>
+                <path
+                  fillRule="evenodd"
+                  d="M12.293 15.707a1 1 0 0 1-1.414 0l-5-5a1 1 0 0 1 0-1.414l5-5a1 1 0 1 1 1.414 1.414L8.414 10l3.879 3.879a1 1 0 0 1 0 1.414z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span>Prev</span>
+            </button>
 
-                <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-                  {cell.events.length > 0 ? (
-                    cell.events.map((event) => (
-                      <div
-                        key={`${event.title}-${event.date.toISOString()}`}
-                        className={`rounded-xl px-2.5 py-2 text-left text-xs font-semibold leading-snug ${
-                          isLightTheme
-                            ? {
-                                Budget: 'bg-emerald-100 text-emerald-900 ring-1 ring-inset ring-emerald-200',
-                                Bills: 'bg-sky-100 text-sky-900 ring-1 ring-inset ring-sky-200',
-                                Planning: 'bg-amber-100 text-amber-900 ring-1 ring-inset ring-amber-200',
-                                General: 'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200'
-                              }[event.category]
-                            : categoryStyles[event.category]
-                        }`}
-                      >
-                        <div className="truncate">{event.title}</div>
-                        <div
-                          className={`mt-1 text-[10px] font-medium uppercase tracking-[0.18em] ${
-                            isLightTheme ? 'opacity-75' : 'opacity-70'
-                          }`}
-                        >
-                          {event.category}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className={`mt-auto text-[11px] ${isLightTheme ? 'text-slate-300' : 'text-white/22'}`}>
-                      &nbsp;
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+            <div
+              className={isLightTheme ? 'w-px bg-slate-200' : 'w-px bg-white/12'}
+              aria-hidden="true"
+            />
+
+            <button
+              type="button"
+              onClick={() => navigateMonth(1)}
+              aria-label="Next month"
+              className={monthStepperButtonClassName}
+              title="Next month"
+            >
+              <span>Next</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                className="h-4 w-4"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M7.293 14.707a1 1 0 0 1 0-1.414L10.586 10 7.293 6.707a1 1 0 0 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
+
+      <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-5">
+        <div
+          className={`grid grid-cols-7 gap-px rounded-t-2xl border text-center text-[11px] font-semibold uppercase tracking-[0.22em] ${
+            isLightTheme
+              ? 'overflow-hidden border-slate-200 bg-white text-slate-500 shadow-sm ring-1 ring-slate-200/70'
+              : 'border-white/10 bg-white/10 text-(--theme-text-muted)'
+          }`}
+        >
+          {displayedWeekdayLabels.map((weekday) => (
+            <div
+              key={weekday}
+              className={
+                isLightTheme ? 'bg-white px-2 py-3' : 'bg-[rgba(255,255,255,0.03)] px-2 py-3'
+              }
+            >
+              {weekday}
+            </div>
+          ))}
+        </div>
+
+        <div className={panelClassName}>
+          {calendarCells.map((cell) => (
+            <div
+              key={cell.date.toISOString()}
+              className={`relative flex min-h-0 flex-col overflow-hidden p-3 transition ${
+                isLightTheme ? 'bg-white' : 'bg-[rgba(255,255,255,0.03)]'
+              } ${
+                cell.isCurrentMonth
+                  ? isLightTheme
+                    ? 'text-slate-900'
+                    : 'text-(--theme-text-strong)'
+                  : isLightTheme
+                    ? 'text-slate-300'
+                    : 'text-white/35'
+              } ${
+                cell.isToday
+                  ? isLightTheme
+                    ? 'bg-emerald-50 ring-1 ring-inset ring-emerald-300/50'
+                    : 'bg-emerald-400/12 ring-1 ring-inset ring-emerald-300/30'
+                  : ''
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <span
+                  className={`text-sm font-semibold sm:text-base ${isLightTheme ? 'text-slate-900' : ''}`}
+                >
+                  {cell.date.getDate().toString().padStart(2, '0')}
+                </span>
+                {cell.isToday ? (
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${
+                      isLightTheme
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-emerald-400/20 text-emerald-50'
+                    }`}
+                  >
+                    Today
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
+                {cell.events.length > 0 ? (
+                  cell.events.map((event) => (
+                    <div
+                      key={`${event.title}-${event.date.toISOString()}`}
+                      className={`rounded-xl px-2.5 py-2 text-left text-xs font-semibold leading-snug ${
+                        isLightTheme
+                          ? {
+                              Budget:
+                                'bg-emerald-100 text-emerald-900 ring-1 ring-inset ring-emerald-200',
+                              Bills: 'bg-sky-100 text-sky-900 ring-1 ring-inset ring-sky-200',
+                              Planning:
+                                'bg-amber-100 text-amber-900 ring-1 ring-inset ring-amber-200',
+                              General:
+                                'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200'
+                            }[event.category]
+                          : categoryStyles[event.category]
+                      }`}
+                    >
+                      <div className="truncate">{event.title}</div>
+                      <div
+                        className={`mt-1 text-[10px] font-medium uppercase tracking-[0.18em] ${
+                          isLightTheme ? 'opacity-75' : 'opacity-70'
+                        }`}
+                      >
+                        {event.category}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div
+                    className={`mt-auto text-[11px] ${isLightTheme ? 'text-slate-300' : 'text-white/22'}`}
+                  >
+                    &nbsp;
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
 

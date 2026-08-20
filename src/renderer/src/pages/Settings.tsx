@@ -86,7 +86,8 @@ const createSelectStyles = (themeMode: 'dark' | 'light'): StylesConfig<SelectOpt
         ? 'rgba(20, 47, 58, 0.12)'
         : 'rgba(255, 255, 255, 0.14)',
     boxShadow: 'none',
-    backgroundColor: themeMode === 'light' ? 'rgba(255, 255, 255, 0.92)' : 'rgba(255, 255, 255, 0.06)'
+    backgroundColor:
+      themeMode === 'light' ? 'rgba(255, 255, 255, 0.92)' : 'rgba(255, 255, 255, 0.06)'
   }),
   menu: (base) => ({
     ...base,
@@ -235,148 +236,148 @@ function Settings({ configuration, onConfigurationUpdated }: SettingsProps): Rea
 
   return (
     <section className="content-area">
-        <h3>General Settings</h3>
-        <p>Application settings and preferences.</p>
+      <h3>General Settings</h3>
+      <p>Application settings and preferences.</p>
 
-        <div className="settings-stack">
-          <div className="setting-row">
-            <div className="setting-description-card">
-              <div className="setting-header">
-                <h4>Currency Type</h4>
-                <div className="setting-select">
-                  <Select
-                    inputId="currencyType"
-                    options={currencyOptions}
-                    value={resolvedCurrency}
-                    onChange={(selected) => {
-                      if (selected) {
-                        void updateConfigurationValue('CURRENCY_TYPE', selected.value)
-                      }
-                    }}
-                    styles={selectStyles}
-                    theme={selectTheme}
-                    isSearchable
-                    isDisabled={savingKey === 'CURRENCY_TYPE'}
-                    placeholder="Select currency"
-                  />
-                </div>
+      <div className="settings-stack">
+        <div className="setting-row">
+          <div className="setting-description-card">
+            <div className="setting-header">
+              <h4>Currency Type</h4>
+              <div className="setting-select">
+                <Select
+                  inputId="currencyType"
+                  options={currencyOptions}
+                  value={resolvedCurrency}
+                  onChange={(selected) => {
+                    if (selected) {
+                      void updateConfigurationValue('CURRENCY_TYPE', selected.value)
+                    }
+                  }}
+                  styles={selectStyles}
+                  theme={selectTheme}
+                  isSearchable
+                  isDisabled={savingKey === 'CURRENCY_TYPE'}
+                  placeholder="Select currency"
+                />
               </div>
-
-              <p>
-                Choose how money values are shown across the app. Example: <strong>$ USD</strong>.
-              </p>
             </div>
-          </div>
 
-          <div className="setting-row">
-            <div className="setting-description-card">
-              <div className="setting-header">
-                <h4>Account Month Start Date</h4>
-                <div className="setting-select">
-                  <Select
-                    inputId="monthStartDate"
-                    options={monthStartOptions}
-                    value={resolvedMonthStart}
-                    onChange={(selected) => {
-                      if (selected) {
-                        void updateConfigurationValue('MONTH_START_DATE', selected.value)
-                      }
-                    }}
-                    styles={selectStyles}
-                    theme={selectTheme}
-                    isSearchable={false}
-                    isDisabled={savingKey === 'MONTH_START_DATE'}
-                    placeholder="Select day"
-                  />
-                </div>
-              </div>
-
-              <p>Set the day that starts your monthly cycle, budgets, and summaries.</p>
-            </div>
-          </div>
-
-          <div className="setting-row">
-            <div className="setting-description-card">
-              <div className="setting-header">
-                <h4>Week Start Date</h4>
-                <div className="setting-select">
-                  <Select
-                    inputId="weekStartDate"
-                    options={weekStartOptions}
-                    value={resolvedWeekStart}
-                    onChange={(selected) => {
-                      if (selected) {
-                        void updateConfigurationValue('WEEK_START_DATE', selected.value)
-                      }
-                    }}
-                    styles={selectStyles}
-                    theme={selectTheme}
-                    isSearchable={false}
-                    isDisabled={savingKey === 'WEEK_START_DATE'}
-                    placeholder="Select day"
-                  />
-                </div>
-              </div>
-
-              <p>Choose whether weeks start on Monday or Sunday in the app.</p>
-            </div>
-          </div>
-
-          <div className="setting-row">
-            <div className="setting-description-card">
-              <div className="setting-header">
-                <h4>First View</h4>
-                <div className="setting-select">
-                  <Select
-                    inputId="firstView"
-                    options={firstViewOptions}
-                    value={resolvedFirstView}
-                    onChange={(selected) => {
-                      if (selected) {
-                        void updateConfigurationValue('FIRST_VIEW', selected.value)
-                      }
-                    }}
-                    styles={selectStyles}
-                    theme={selectTheme}
-                    isSearchable={false}
-                    isDisabled={savingKey === 'FIRST_VIEW'}
-                    placeholder="Select view"
-                  />
-                </div>
-              </div>
-
-              <p>Choose which transactions view opens first when the app starts.</p>
-            </div>
-          </div>
-
-          <div className="setting-row">
-            <div className="setting-description-card">
-              <div className="setting-header">
-                <h4>Theme</h4>
-                <div className="setting-select">
-                  <Select
-                    inputId="theme"
-                    options={themeOptions}
-                    value={resolvedTheme}
-                    onChange={(selected) => {
-                      if (selected) {
-                        void updateConfigurationValue('THEME', selected.value)
-                      }
-                    }}
-                    styles={selectStyles}
-                    theme={selectTheme}
-                    menuPlacement="top"
-                    isSearchable={false}
-                    isDisabled={savingKey === 'THEME'}
-                    placeholder="Select theme"
-                  />
-                </div>
-              </div>
-
-              <p>Switch between the dark and light app themes.</p>
-            </div>
+            <p>
+              Choose how money values are shown across the app. Example: <strong>$ USD</strong>.
+            </p>
           </div>
         </div>
+
+        <div className="setting-row">
+          <div className="setting-description-card">
+            <div className="setting-header">
+              <h4>Account Month Start Date</h4>
+              <div className="setting-select">
+                <Select
+                  inputId="monthStartDate"
+                  options={monthStartOptions}
+                  value={resolvedMonthStart}
+                  onChange={(selected) => {
+                    if (selected) {
+                      void updateConfigurationValue('MONTH_START_DATE', selected.value)
+                    }
+                  }}
+                  styles={selectStyles}
+                  theme={selectTheme}
+                  isSearchable={false}
+                  isDisabled={savingKey === 'MONTH_START_DATE'}
+                  placeholder="Select day"
+                />
+              </div>
+            </div>
+
+            <p>Set the day that starts your monthly cycle, budgets, and summaries.</p>
+          </div>
+        </div>
+
+        <div className="setting-row">
+          <div className="setting-description-card">
+            <div className="setting-header">
+              <h4>Week Start Date</h4>
+              <div className="setting-select">
+                <Select
+                  inputId="weekStartDate"
+                  options={weekStartOptions}
+                  value={resolvedWeekStart}
+                  onChange={(selected) => {
+                    if (selected) {
+                      void updateConfigurationValue('WEEK_START_DATE', selected.value)
+                    }
+                  }}
+                  styles={selectStyles}
+                  theme={selectTheme}
+                  isSearchable={false}
+                  isDisabled={savingKey === 'WEEK_START_DATE'}
+                  placeholder="Select day"
+                />
+              </div>
+            </div>
+
+            <p>Choose whether weeks start on Monday or Sunday in the app.</p>
+          </div>
+        </div>
+
+        <div className="setting-row">
+          <div className="setting-description-card">
+            <div className="setting-header">
+              <h4>First View</h4>
+              <div className="setting-select">
+                <Select
+                  inputId="firstView"
+                  options={firstViewOptions}
+                  value={resolvedFirstView}
+                  onChange={(selected) => {
+                    if (selected) {
+                      void updateConfigurationValue('FIRST_VIEW', selected.value)
+                    }
+                  }}
+                  styles={selectStyles}
+                  theme={selectTheme}
+                  isSearchable={false}
+                  isDisabled={savingKey === 'FIRST_VIEW'}
+                  placeholder="Select view"
+                />
+              </div>
+            </div>
+
+            <p>Choose which transactions view opens first when the app starts.</p>
+          </div>
+        </div>
+
+        <div className="setting-row">
+          <div className="setting-description-card">
+            <div className="setting-header">
+              <h4>Theme</h4>
+              <div className="setting-select">
+                <Select
+                  inputId="theme"
+                  options={themeOptions}
+                  value={resolvedTheme}
+                  onChange={(selected) => {
+                    if (selected) {
+                      void updateConfigurationValue('THEME', selected.value)
+                    }
+                  }}
+                  styles={selectStyles}
+                  theme={selectTheme}
+                  menuPlacement="top"
+                  isSearchable={false}
+                  isDisabled={savingKey === 'THEME'}
+                  placeholder="Select theme"
+                />
+              </div>
+            </div>
+
+            <p>Switch between the dark and light app themes.</p>
+          </div>
+        </div>
+      </div>
     </section>
   )
 }

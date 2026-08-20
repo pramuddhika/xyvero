@@ -93,7 +93,11 @@ function Accounts(): React.JSX.Element {
       ) : error ? (
         <div className="account-error-state">
           <p className="text-red-400">{error}</p>
-          <button type="button" onClick={() => void fetchAccountList()} className="category-add-button mt-2">
+          <button
+            type="button"
+            onClick={() => void fetchAccountList()}
+            className="category-add-button mt-2"
+          >
             Retry
           </button>
         </div>
@@ -101,9 +105,7 @@ function Accounts(): React.JSX.Element {
         <div className="accounts-grid">
           {accountTypes.map((item) => (
             <div key={item.account_type_id} className="account-type-card">
-              <div className="account-type-icon-box">
-                {getAccountIcon(item.account_type)}
-              </div>
+              <div className="account-type-icon-box">{getAccountIcon(item.account_type)}</div>
               <div className="account-type-info">
                 <div className="account-type-header">
                   <h3 className="account-type-name">{item.account_type_name}</h3>
@@ -120,4 +122,3 @@ function Accounts(): React.JSX.Element {
 }
 
 export default Accounts
-

@@ -22,10 +22,15 @@ if (typeof window !== 'undefined' && !window.api) {
       return parseJson(res)
     },
     getConfigurationValue: async (configurationKey: string) => {
-      const res = await fetch(`/api/getConfigurationValue?key=${encodeURIComponent(configurationKey)}`)
+      const res = await fetch(
+        `/api/getConfigurationValue?key=${encodeURIComponent(configurationKey)}`
+      )
       return parseJson(res)
     },
-    setConfigurationValue: async (configurationKey: string, configurationValue: string): Promise<void> => {
+    setConfigurationValue: async (
+      configurationKey: string,
+      configurationValue: string
+    ): Promise<void> => {
       const res = await fetch('/api/setConfigurationValue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -36,7 +41,15 @@ if (typeof window !== 'undefined' && !window.api) {
     listAccountTypes: async () => {
       const res = await fetch('/api/listAccountTypes')
       return parseJson(res)
+    },
+    getVersion: async () => '0.0.1',
+    updater: {
+      onUpdateAvailable: () => () => {},
+      onUpdateProgress: () => () => {},
+      onUpdateDownloaded: () => () => {},
+      onUpdateError: () => () => {},
+      startDownload: () => {},
+      quitAndInstall: () => {}
     }
   }
 }
-

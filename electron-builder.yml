@@ -1,4 +1,4 @@
-appId: com.electron.app
+appId: com.xyvero
 productName: xyvero
 directories:
   buildResources: build
@@ -13,7 +13,7 @@ asarUnpack:
   - resources/**
 win:
   executableName: xyvero
-  signAndEditExecutable: false
+  icon: build/icon.ico
   signExts:
     - '!.exe'
     - '!.dll'
@@ -43,5 +43,7 @@ appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
 publish:
-  provider: generic
-  url: https://example.com/auto-updates
+  provider: github
+  owner: pramuddhika
+  repo: xyvero
+  releaseType: release
