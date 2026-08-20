@@ -42,6 +42,7 @@ if (typeof window !== 'undefined' && !window.api) {
       const res = await fetch('/api/listAccountTypes')
       return parseJson(res)
     },
+    getVersion: async () => '0.0.1',
     updater: {
       onUpdateAvailable: () => () => {},
       onUpdateProgress: () => () => {},

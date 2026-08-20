@@ -34,6 +34,7 @@ const api = {
       account_type_name: string
     }>
   > => electronAPI.ipcRenderer.invoke('db:listAccountTypes'),
+  getVersion: (): Promise<string> => electronAPI.ipcRenderer.invoke('app:getVersion'),
   updater: {
     onUpdateAvailable: (callback: (info: any) => void) => {
       const listener = (_event: any, info: any) => callback(info)

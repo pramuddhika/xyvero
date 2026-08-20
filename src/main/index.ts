@@ -113,6 +113,7 @@ app.whenReady().then(() => {
     }
   )
   ipcMain.handle('db:listAccountTypes', () => listAccountTypes())
+  ipcMain.handle('app:getVersion', () => app.getVersion())
 
   createWindow()
 

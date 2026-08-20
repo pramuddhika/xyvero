@@ -19,6 +19,7 @@ interface AppApi {
   getConfigurationValue: (configurationKey: string) => Promise<ConfigurationRecord | undefined>
   setConfigurationValue: (configurationKey: string, configurationValue: string) => Promise<void>
   listAccountTypes: () => Promise<AccountTypeRecord[]>
+  getVersion: () => Promise<string>
   updater: {
     onUpdateAvailable: (callback: (info: any) => void) => () => void
     onUpdateProgress: (callback: (percent: number) => void) => () => void

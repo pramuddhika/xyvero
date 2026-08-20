@@ -98,6 +98,11 @@ function Sidebar({ isOpen, onToggle, onNavigate, active, theme }: SidebarProps):
       ? new URL('../../../../resources/icon_light.png', import.meta.url).href
       : logoDark
 
+  const [appVersion, setAppVersion] = React.useState('0.0.1')
+  React.useEffect(() => {
+    window.api?.getVersion?.().then(setAppVersion).catch(console.error)
+  }, [])
+
   return (
     <aside className={`side-nav ${isOpen ? 'open' : 'closed'}`}>
       {isOpen ? (
@@ -156,7 +161,7 @@ function Sidebar({ isOpen, onToggle, onNavigate, active, theme }: SidebarProps):
 
       {isOpen ? (
         <div className="side-nav-footer">
-          <div className="nav-version">Version 0.0.1</div>
+          <div className="nav-version">Version {appVersion}</div>
         </div>
       ) : null}
     </aside>

@@ -6,6 +6,11 @@ import { Sparkles, ShieldCheck, Zap, FolderKanban, Palette, Mail } from 'lucide-
 function About(): React.JSX.Element {
   const portfolioUrl = 'https://www.pramuddhika.com/'
 
+  const [appVersion, setAppVersion] = React.useState('0.0.1')
+  React.useEffect(() => {
+    window.api?.getVersion?.().then(setAppVersion).catch(console.error)
+  }, [])
+
   return (
     <section className="content-area about-page">
       {/* Hero Header Card */}
@@ -19,7 +24,7 @@ function About(): React.JSX.Element {
           <div className="about-hero-text">
             <div className="about-title-row">
               <h2 className="about-app-name">Xyvero</h2>
-              <span className="about-version-badge">v0.0.1</span>
+              <span className="about-version-badge">v{appVersion}</span>
               <span className="about-status-badge">
                 <Sparkles size={13} className="inline-block mr-1" />
                 Personal Finance
