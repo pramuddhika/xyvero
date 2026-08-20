@@ -2,6 +2,7 @@
 import { app, shell, BrowserWindow, ipcMain, nativeImage } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { autoUpdater } from 'electron-updater'
 import iconPath from '../../resources/icon.png?asset'
 import {
   getDatabase,
@@ -13,10 +14,11 @@ import {
 } from './database'
 
 const icon = nativeImage.createFromPath(iconPath)
+let mainWindow: BrowserWindow | null = null
 
 function createWindow(): void {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1320,
     height: 860,
     show: false,
@@ -29,7 +31,9 @@ function createWindow(): void {
   })
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
+    if (mainWindow) {
+      mainWindow.show()
+    }
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -44,6 +48,38 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+}
+
+function setupAutoUpdater(): void {
+  // Disable automatic downloading of updates, we will ask first
+  autoUpdater.autoDownload = false
+
+  autoUpdater.on('update-available', (info) => {
+    mainWindow?.webContents.send('updater:available', info)
+  })
+
+  autoUpdater.on('download-progress', (progressObj) => {
+    mainWindow?.webContents.send('updater:progress', progressObj.percent)
+  })
+
+  autoUpdater.on('update-downloaded', (info) => {
+    mainWindow?.webContents.send('updater:downloaded', info)
+  })
+
+  autoUpdater.on('error', (err) => {
+    mainWindow?.webContents.send('updater:error', err?.message || String(err))
+  })
+
+  ipcMain.on('updater:start-download', () => {
+    autoUpdater.downloadUpdate()
+  })
+
+  ipcMain.on('updater:quit-and-install', () => {
+    autoUpdater.quitAndInstall()
+  })
+
+  // Check for updates and notify user if an update is found
+  autoUpdater.checkForUpdatesAndNotify()
 }
 
 // This method will be called when Electron has finished
@@ -70,12 +106,18 @@ app.whenReady().then(() => {
   ipcMain.handle('db:getConfigurationValue', (_, configurationKey: string) => {
     return getConfigurationValue(configurationKey)
   })
-  ipcMain.handle('db:setConfigurationValue', (_, configurationKey: string, configurationValue: string) => {
-    setConfigurationValue(configurationKey, configurationValue)
-  })
+  ipcMain.handle(
+    'db:setConfigurationValue',
+    (_, configurationKey: string, configurationValue: string) => {
+      setConfigurationValue(configurationKey, configurationValue)
+    }
+  )
   ipcMain.handle('db:listAccountTypes', () => listAccountTypes())
 
   createWindow()
+
+  // Setup auto updates checking
+  setupAutoUpdater()
 
   if (process.platform === 'darwin' && app.dock) {
     app.dock.setIcon(icon)

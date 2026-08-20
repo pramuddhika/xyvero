@@ -33,4 +33,4 @@ export function Icon({ icon }: Props): React.JSX.Element {
   const IconComponent = Icons[icon as keyof typeof Icons] || Icons.circle
 
   return <IconComponent size={20} />
-}
+}

@@ -9,6 +9,7 @@ import Accounts from '../pages/Accounts'
 import Categories from '../pages/Categories'
 import Settings from '../pages/Settings'
 import About from '../pages/About'
+import UpdateToast from '../components/UpdateToast'
 
 type ConfigurationRecord = {
   configuration_id: number
@@ -88,7 +89,9 @@ function Layout(): React.JSX.Element {
   const renderPage = () => {
     switch (activePage) {
       case 'Transactions': {
-        const weekStartValue = configuration.find((item) => item.configuration_key === 'WEEK_START_DATE')
+        const weekStartValue = configuration.find(
+          (item) => item.configuration_key === 'WEEK_START_DATE'
+        )
         const resolvedWeekStart = weekStartValue?.configuration_value ?? 'Sunday'
         return <Transactions theme={themeMode} weekStart={resolvedWeekStart} />
       }
@@ -110,7 +113,9 @@ function Layout(): React.JSX.Element {
       case 'About':
         return <About />
       default: {
-        const weekStartValue = configuration.find((item) => item.configuration_key === 'WEEK_START_DATE')
+        const weekStartValue = configuration.find(
+          (item) => item.configuration_key === 'WEEK_START_DATE'
+        )
         const resolvedWeekStart = weekStartValue?.configuration_value ?? 'Sunday'
         return <Transactions theme={themeMode} weekStart={resolvedWeekStart} />
       }
@@ -127,9 +132,8 @@ function Layout(): React.JSX.Element {
         theme={themeMode}
       />
 
-      <main className="main-panel">
-        {renderPage()}
-      </main>
+      <main className="main-panel">{renderPage()}</main>
+      <UpdateToast />
     </div>
   )
 }

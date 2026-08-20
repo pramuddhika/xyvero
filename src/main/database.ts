@@ -65,7 +65,7 @@ function createTables(database: Database.Database): void {
       category_colour VARCHAR(7) NOT NULL DEFAULT '#6366f1'
     );
   `)
- 
+
   database.exec(`
     INSERT OR IGNORE INTO configuration (configuration_id, configuration_key, configuration_value)
     VALUES
@@ -140,10 +140,7 @@ export function getConfigurationValue(configurationKey: string): ConfigurationRe
     .get(configurationKey) as ConfigurationRecord | undefined
 }
 
-export function setConfigurationValue(
-  configurationKey: string,
-  configurationValue: string
-): void {
+export function setConfigurationValue(configurationKey: string, configurationValue: string): void {
   const database = getDatabase()
   database
     .prepare(

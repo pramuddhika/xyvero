@@ -19,6 +19,14 @@ interface AppApi {
   getConfigurationValue: (configurationKey: string) => Promise<ConfigurationRecord | undefined>
   setConfigurationValue: (configurationKey: string, configurationValue: string) => Promise<void>
   listAccountTypes: () => Promise<AccountTypeRecord[]>
+  updater: {
+    onUpdateAvailable: (callback: (info: any) => void) => () => void
+    onUpdateProgress: (callback: (percent: number) => void) => () => void
+    onUpdateDownloaded: (callback: (info: any) => void) => () => void
+    onUpdateError: (callback: (error: string) => void) => () => void
+    startDownload: () => void
+    quitAndInstall: () => void
+  }
 }
 
 declare global {

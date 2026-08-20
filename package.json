@@ -1,6 +1,6 @@
 {
   "name": "xyvero",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "author": "pramuddhika.com",
@@ -27,6 +27,7 @@
     "@tailwindcss/vite": "^4.3.0",
     "better-sqlite3": "^12.10.0",
     "currency-codes": "^2.2.0",
+    "electron-updater": "^6.8.9",
     "lucide-react": "^1.20.0",
     "rcedit": "^5.0.2",
     "react-select": "^5.10.2",

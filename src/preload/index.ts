@@ -11,7 +11,9 @@ const api = {
       configuration_value: string
     }>
   > => electronAPI.ipcRenderer.invoke('db:listConfiguration'),
-  getConfigurationValue: (configurationKey: string): Promise<
+  getConfigurationValue: (
+    configurationKey: string
+  ): Promise<
     | {
         configuration_id: number
         configuration_key: string
@@ -20,7 +22,11 @@ const api = {
     | undefined
   > => electronAPI.ipcRenderer.invoke('db:getConfigurationValue', configurationKey),
   setConfigurationValue: (configurationKey: string, configurationValue: string): Promise<void> =>
-    electronAPI.ipcRenderer.invoke('db:setConfigurationValue', configurationKey, configurationValue),
+    electronAPI.ipcRenderer.invoke(
+      'db:setConfigurationValue',
+      configurationKey,
+      configurationValue
+    ),
   listAccountTypes: (): Promise<
     Array<{
       account_type_id: number
@@ -28,6 +34,42 @@ const api = {
       account_type_name: string
     }>
   > => electronAPI.ipcRenderer.invoke('db:listAccountTypes'),
+  updater: {
+    onUpdateAvailable: (callback: (info: any) => void) => {
+      const listener = (_event: any, info: any) => callback(info)
+      electronAPI.ipcRenderer.on('updater:available', listener)
+      return () => {
+        electronAPI.ipcRenderer.removeListener('updater:available', listener)
+      }
+    },
+    onUpdateProgress: (callback: (percent: number) => void) => {
+      const listener = (_event: any, percent: number) => callback(percent)
+      electronAPI.ipcRenderer.on('updater:progress', listener)
+      return () => {
+        electronAPI.ipcRenderer.removeListener('updater:progress', listener)
+      }
+    },
+    onUpdateDownloaded: (callback: (info: any) => void) => {
+      const listener = (_event: any, info: any) => callback(info)
+      electronAPI.ipcRenderer.on('updater:downloaded', listener)
+      return () => {
+        electronAPI.ipcRenderer.removeListener('updater:downloaded', listener)
+      }
+    },
+    onUpdateError: (callback: (error: string) => void) => {
+      const listener = (_event: any, error: string) => callback(error)
+      electronAPI.ipcRenderer.on('updater:error', listener)
+      return () => {
+        electronAPI.ipcRenderer.removeListener('updater:error', listener)
+      }
+    },
+    startDownload: () => {
+      electronAPI.ipcRenderer.send('updater:start-download')
+    },
+    quitAndInstall: () => {
+      electronAPI.ipcRenderer.send('updater:quit-and-install')
+    }
+  }
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to
