@@ -13,7 +13,7 @@ type SidebarProps = {
 
 const navItems = [
   { label: 'Transactions', description: 'View and manage your transactions' },
-  { label: 'Statistics', description: 'View your financial insights' },
+  // { label: 'Statistics', description: 'View your financial insights' },
   { label: 'Accounts', description: 'Manage your accounts' },
   { label: 'Categories', description: 'Manage your expense categories' },
   { label: 'Settings', description: 'Configure your preferences' },

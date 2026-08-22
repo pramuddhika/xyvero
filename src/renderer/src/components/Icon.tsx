@@ -1,4 +1,5 @@
 /* eslint-disable prettier/prettier */
+import React from 'react'
 import {
   Circle,
   Wallet,
@@ -9,10 +10,55 @@ import {
   Car,
   PiggyBank,
   CreditCard,
-  Briefcase
+  Briefcase,
+  Coffee,
+  Pizza,
+  Beer,
+  Gift,
+  Shirt,
+  Gamepad2,
+  Film,
+  Music,
+  Tv,
+  Book,
+  Plane,
+  Bus,
+  Bike,
+  Building,
+  HeartPulse,
+  Heart,
+  Activity,
+  Pill,
+  Phone,
+  Wifi,
+  Bolt,
+  Droplet,
+  Flame,
+  Trash2,
+  PawPrint,
+  Baby,
+  GraduationCap,
+  Laptop,
+  Wrench,
+  Palette,
+  Camera,
+  Dumbbell,
+  Trophy,
+  Ticket,
+  DollarSign,
+  Coins,
+  Landmark,
+  Receipt,
+  Percent,
+  TrendingUp,
+  Globe,
+  MapPin,
+  Sun,
+  Moon,
+  Star
 } from 'lucide-react'
 
-const Icons = {
+export const Icons = {
   circle: Circle,
   wallet: Wallet,
   house: House,
@@ -22,15 +68,64 @@ const Icons = {
   car: Car,
   savings: PiggyBank,
   card: CreditCard,
-  salary: Briefcase
+  salary: Briefcase,
+  coffee: Coffee,
+  pizza: Pizza,
+  beer: Beer,
+  gift: Gift,
+  shirt: Shirt,
+  game: Gamepad2,
+  movie: Film,
+  music: Music,
+  tv: Tv,
+  book: Book,
+  plane: Plane,
+  bus: Bus,
+  bike: Bike,
+  hotel: Building,
+  hospital: HeartPulse,
+  heart: Heart,
+  activity: Activity,
+  pill: Pill,
+  phone: Phone,
+  wifi: Wifi,
+  electricity: Bolt,
+  water: Droplet,
+  gas: Flame,
+  trash: Trash2,
+  pet: PawPrint,
+  baby: Baby,
+  education: GraduationCap,
+  laptop: Laptop,
+  tool: Wrench,
+  brush: Palette,
+  camera: Camera,
+  gym: Dumbbell,
+  trophy: Trophy,
+  ticket: Ticket,
+  dollar: DollarSign,
+  coins: Coins,
+  bank: Landmark,
+  receipt: Receipt,
+  percent: Percent,
+  trending: TrendingUp,
+  globe: Globe,
+  map: MapPin,
+  sun: Sun,
+  moon: Moon,
+  star: Star
 } as const
+
+export const iconsList = Object.keys(Icons) as Array<keyof typeof Icons>
 
 interface Props {
   icon: string
+  size?: number
+  className?: string
 }
 
-export function Icon({ icon }: Props): React.JSX.Element {
+export function Icon({ icon, size = 20, className }: Props): React.JSX.Element {
   const IconComponent = Icons[icon as keyof typeof Icons] || Icons.circle
 
-  return <IconComponent size={20} />
+  return <IconComponent size={size} className={className} />
 }

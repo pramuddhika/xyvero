@@ -42,6 +42,35 @@ if (typeof window !== 'undefined' && !window.api) {
       const res = await fetch('/api/listAccountTypes')
       return parseJson(res)
     },
+    listCategoryTypes: async () => {
+      const res = await fetch('/api/listCategoryTypes')
+      return parseJson(res)
+    },
+    listCategories: async () => {
+      const res = await fetch('/api/listCategories')
+      return parseJson(res)
+    },
+    addCategory: async (
+      categoryName: string,
+      categoryAmount: number,
+      categoryGroupId: number,
+      categoryIcon: string,
+      categoryColour: string
+    ): Promise<number> => {
+      const res = await fetch('/api/addCategory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          categoryName,
+          categoryAmount,
+          categoryGroupId,
+          categoryIcon,
+          categoryColour
+        })
+      })
+      const result = await parseJson<{ categoryId: number }>(res)
+      return result.categoryId
+    },
     getVersion: async () => '0.0.1',
     updater: {
       onUpdateAvailable: () => () => {},

@@ -13,12 +13,36 @@ type AccountTypeRecord = {
   account_type_name: string
 }
 
+type CategoryTypeRecord = {
+  category_id: number
+  category_type: string
+  category_name: string
+}
+
+type CategoryRecord = {
+  category_id: number
+  category_name: string
+  category_amount: number
+  category_group_id: number
+  category_icon: string
+  category_colour: string
+}
+
 interface AppApi {
   getDatabasePath: () => Promise<string>
   listConfiguration: () => Promise<ConfigurationRecord[]>
   getConfigurationValue: (configurationKey: string) => Promise<ConfigurationRecord | undefined>
   setConfigurationValue: (configurationKey: string, configurationValue: string) => Promise<void>
   listAccountTypes: () => Promise<AccountTypeRecord[]>
+  listCategoryTypes: () => Promise<CategoryTypeRecord[]>
+  listCategories: () => Promise<CategoryRecord[]>
+  addCategory: (
+    categoryName: string,
+    categoryAmount: number,
+    categoryGroupId: number,
+    categoryIcon: string,
+    categoryColour: string
+  ) => Promise<number>
   getVersion: () => Promise<string>
   updater: {
     onUpdateAvailable: (callback: (info: any) => void) => () => void

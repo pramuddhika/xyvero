@@ -13,7 +13,7 @@ asarUnpack:
   - resources/**
 win:
   executableName: xyvero
-  icon: build/icon.ico
+  icon: resources/icon.ico
   signExts:
     - '!.exe'
     - '!.dll'

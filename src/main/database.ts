@@ -16,6 +16,21 @@ export type AccountTypeRecord = {
   account_type_name: string
 }
 
+export type CategoryTypeRecord = {
+  category_id: number
+  category_type: string
+  category_name: string
+}
+
+export type CategoryRecord = {
+  category_id: number
+  category_name: string
+  category_amount: number
+  category_group_id: number
+  category_icon: string
+  category_colour: string
+}
+
 let db: Database.Database | null = null
 
 type AppLike = {
@@ -168,4 +183,63 @@ export function listAccountTypes(): AccountTypeRecord[] {
       `
     )
     .all() as AccountTypeRecord[]
+}
+
+export function listCategoryTypes(): CategoryTypeRecord[] {
+  const database = getDatabase()
+  return database
+    .prepare(
+      `
+        SELECT
+          category_id,
+          category_type,
+          category_name
+        FROM categoryTypes
+        ORDER BY category_id ASC
+      `
+    )
+    .all() as CategoryTypeRecord[]
+}
+
+export function listCategories(): CategoryRecord[] {
+  const database = getDatabase()
+  return database
+    .prepare(
+      `
+        SELECT
+          category_id,
+          category_name,
+          category_amount,
+          category_group_id,
+          category_icon,
+          category_colour
+        FROM category
+        ORDER BY category_id ASC
+      `
+    )
+    .all() as CategoryRecord[]
+}
+
+export function addCategory(
+  categoryName: string,
+  categoryAmount: number,
+  categoryGroupId: number,
+  categoryIcon: string,
+  categoryColour: string
+): number {
+  const database = getDatabase()
+  const result = database
+    .prepare(
+      `
+        INSERT INTO category (
+          category_name,
+          category_amount,
+          category_group_id,
+          category_icon,
+          category_colour
+        ) VALUES (?, ?, ?, ?, ?)
+      `
+    )
+    .run(categoryName, categoryAmount, categoryGroupId, categoryIcon, categoryColour)
+  return result.lastInsertRowid as number
 }

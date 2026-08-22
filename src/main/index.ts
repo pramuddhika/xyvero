@@ -10,7 +10,10 @@ import {
   getConfigurationValue,
   listAccountTypes,
   listConfiguration,
-  setConfigurationValue
+  setConfigurationValue,
+  listCategoryTypes,
+  listCategories,
+  addCategory
 } from './database'
 
 const icon = nativeImage.createFromPath(iconPath)
@@ -113,6 +116,21 @@ app.whenReady().then(() => {
     }
   )
   ipcMain.handle('db:listAccountTypes', () => listAccountTypes())
+  ipcMain.handle('db:listCategoryTypes', () => listCategoryTypes())
+  ipcMain.handle('db:listCategories', () => listCategories())
+  ipcMain.handle(
+    'db:addCategory',
+    (
+      _,
+      categoryName: string,
+      categoryAmount: number,
+      categoryGroupId: number,
+      categoryIcon: string,
+      categoryColour: string
+    ) => {
+      return addCategory(categoryName, categoryAmount, categoryGroupId, categoryIcon, categoryColour)
+    }
+  )
   ipcMain.handle('app:getVersion', () => app.getVersion())
 
   createWindow()

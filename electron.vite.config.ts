@@ -8,7 +8,10 @@ import {
   listAccountTypes,
   listConfiguration,
   getConfigurationValue,
-  setConfigurationValue
+  setConfigurationValue,
+  listCategoryTypes,
+  listCategories,
+  addCategory
 } from './src/main/database'
 
 function devDatabasePlugin(): Plugin {
@@ -84,6 +87,58 @@ function devDatabasePlugin(): Plugin {
               setConfigurationValue(parsed.key, parsed.value)
               res.setHeader('Content-Type', 'application/json')
               res.end(JSON.stringify({ success: true }))
+            } catch (err) {
+              res.statusCode = 500
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: String(err) }))
+            }
+          })
+          return
+        }
+
+        if (pathname === '/api/listCategoryTypes') {
+          try {
+            const data = listCategoryTypes()
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify(data))
+          } catch (err) {
+            res.statusCode = 500
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ error: String(err) }))
+          }
+          return
+        }
+
+        if (pathname === '/api/listCategories') {
+          try {
+            const data = listCategories()
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify(data))
+          } catch (err) {
+            res.statusCode = 500
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ error: String(err) }))
+          }
+          return
+        }
+
+        if (pathname === '/api/addCategory' && req.method === 'POST') {
+          let body = ''
+          req.on('data', (chunk) => {
+            body += chunk
+          })
+          req.on('end', () => {
+            try {
+              const parsed = JSON.parse(body)
+              const categoryId = addCategory(
+                parsed.categoryName,
+                parsed.categoryAmount,
+                parsed.categoryGroupId,
+                parsed.categoryIcon,
+                parsed.categoryColour
+              )
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ categoryId }))
             } catch (err) {
               res.statusCode = 500
               res.setHeader('Content-Type', 'application/json')
