@@ -34,6 +34,38 @@ const api = {
       account_type_name: string
     }>
   > => electronAPI.ipcRenderer.invoke('db:listAccountTypes'),
+  listCategoryTypes: (): Promise<
+    Array<{
+      category_id: number
+      category_type: string
+      category_name: string
+    }>
+  > => electronAPI.ipcRenderer.invoke('db:listCategoryTypes'),
+  listCategories: (): Promise<
+    Array<{
+      category_id: number
+      category_name: string
+      category_amount: number
+      category_group_id: number
+      category_icon: string
+      category_colour: string
+    }>
+  > => electronAPI.ipcRenderer.invoke('db:listCategories'),
+  addCategory: (
+    categoryName: string,
+    categoryAmount: number,
+    categoryGroupId: number,
+    categoryIcon: string,
+    categoryColour: string
+  ): Promise<number> =>
+    electronAPI.ipcRenderer.invoke(
+      'db:addCategory',
+      categoryName,
+      categoryAmount,
+      categoryGroupId,
+      categoryIcon,
+      categoryColour
+    ),
   getVersion: (): Promise<string> => electronAPI.ipcRenderer.invoke('app:getVersion'),
   updater: {
     onUpdateAvailable: (callback: (info: any) => void) => {

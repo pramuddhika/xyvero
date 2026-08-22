@@ -55,20 +55,20 @@ const currencyOptions: SelectOption[] = currencyCodes.data
   })
   .sort((a, b) => a.value.localeCompare(b.value))
 
-const monthStartOptions: SelectOption[] = Array.from({ length: 30 }, (_, index) => {
-  const day = String(index + 1)
-  return { value: day, label: day }
-})
+// const monthStartOptions: SelectOption[] = Array.from({ length: 30 }, (_, index) => {
+//   const day = String(index + 1)
+//   return { value: day, label: day }
+// })
 
 const weekStartOptions: SelectOption[] = [
   { value: 'Monday', label: 'Monday' },
   { value: 'Sunday', label: 'Sunday' }
 ]
 
-const firstViewOptions: SelectOption[] = [
-  { value: 'Calendar', label: 'Calendar' },
-  { value: 'Daily', label: 'Daily Transaction View' }
-]
+// const firstViewOptions: SelectOption[] = [
+//   { value: 'Calendar', label: 'Calendar' },
+//   { value: 'Daily', label: 'Daily Transaction View' }
+// ]
 
 const themeOptions: SelectOption[] = [
   { value: 'dark', label: 'Dark' },
@@ -207,27 +207,27 @@ function Settings({ configuration, onConfigurationUpdated }: SettingsProps): Rea
     return currencyOptions.find((option) => option.value === currencyValue) ?? currencyOptions[0]
   }, [configurationMap])
 
-  const resolvedMonthStart = useMemo(() => {
-    const monthStartValue = configurationMap.get('MONTH_START_DATE')
-    return (
-      monthStartOptions.find((option) => option.value === monthStartValue) ?? monthStartOptions[0]
-    )
-  }, [configurationMap])
+  // const resolvedMonthStart = useMemo(() => {
+  //   const monthStartValue = configurationMap.get('MONTH_START_DATE')
+  //   return (
+  //     monthStartOptions.find((option) => option.value === monthStartValue) ?? monthStartOptions[0]
+  //   )
+  // }, [configurationMap])
 
   const resolvedWeekStart = useMemo(() => {
     const weekStartValue = configurationMap.get('WEEK_START_DATE')
     return weekStartOptions.find((option) => option.value === weekStartValue) ?? weekStartOptions[0]
   }, [configurationMap])
 
-  const resolvedFirstView = useMemo(() => {
-    const firstViewValue = configurationMap.get('FIRST_VIEW')
-
-    if (firstViewValue?.toLowerCase() === 'calender') {
-      return firstViewOptions[0]
-    }
-
-    return firstViewOptions.find((option) => option.value === firstViewValue) ?? firstViewOptions[0]
-  }, [configurationMap])
+  // const resolvedFirstView = useMemo(() => {
+  //   const firstViewValue = configurationMap.get('FIRST_VIEW')
+  // 
+  //   if (firstViewValue?.toLowerCase() === 'calender') {
+  //     return firstViewOptions[0]
+  //   }
+  // 
+  //   return firstViewOptions.find((option) => option.value === firstViewValue) ?? firstViewOptions[0]
+  // }, [configurationMap])
 
   const resolvedTheme = useMemo(() => {
     const themeValue = configurationMap.get('THEME')
@@ -269,7 +269,7 @@ function Settings({ configuration, onConfigurationUpdated }: SettingsProps): Rea
           </div>
         </div>
 
-        <div className="setting-row">
+        {/* <div className="setting-row">
           <div className="setting-description-card">
             <div className="setting-header">
               <h4>Account Month Start Date</h4>
@@ -294,7 +294,7 @@ function Settings({ configuration, onConfigurationUpdated }: SettingsProps): Rea
 
             <p>Set the day that starts your monthly cycle, budgets, and summaries.</p>
           </div>
-        </div>
+        </div> */}
 
         <div className="setting-row">
           <div className="setting-description-card">
@@ -323,7 +323,7 @@ function Settings({ configuration, onConfigurationUpdated }: SettingsProps): Rea
           </div>
         </div>
 
-        <div className="setting-row">
+        {/* <div className="setting-row">
           <div className="setting-description-card">
             <div className="setting-header">
               <h4>First View</h4>
@@ -348,7 +348,7 @@ function Settings({ configuration, onConfigurationUpdated }: SettingsProps): Rea
 
             <p>Choose which transactions view opens first when the app starts.</p>
           </div>
-        </div>
+        </div> */}
 
         <div className="setting-row">
           <div className="setting-description-card">

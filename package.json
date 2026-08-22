@@ -30,6 +30,7 @@
     "electron-updater": "^6.8.9",
     "lucide-react": "^1.20.0",
     "rcedit": "^5.0.2",
+    "react-hook-form": "^7.86.0",
     "react-select": "^5.10.2",
     "tailwindcss": "^4.3.0"
   },
