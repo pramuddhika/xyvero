@@ -57,35 +57,88 @@ function isSameDay(left: Date, right: Date): boolean {
   )
 }
 
-function startOfMonth(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), 1)
+function addMonths(date: Date, months: number): Date {
+  const result = new Date(date)
+  const expectedMonth = (result.getMonth() + months + 1200) % 12
+  result.setMonth(result.getMonth() + months)
+  if (result.getMonth() !== expectedMonth) {
+    result.setDate(0)
+  }
+  return result
 }
 
-function startOfCalendarGrid(date: Date, weekStartIndex = 0): Date {
-  const firstDayOfMonth = startOfMonth(date)
-  const firstDow = firstDayOfMonth.getDay()
+function getPeriodStart(referenceDate: Date, startDay: number): Date {
+  const year = referenceDate.getFullYear()
+  const month = referenceDate.getMonth()
+  const date = referenceDate.getDate()
+
+  let startYear = year
+  let startMonth = month
+
+  if (date < startDay) {
+    startMonth = month - 1
+  }
+
+  const maxDays = new Date(startYear, startMonth + 1, 0).getDate()
+  const start = new Date(startYear, startMonth, Math.min(startDay, maxDays), 0, 0, 0, 0)
+  return start
+}
+
+function getPeriodBoundaries(referenceDate: Date, startDay: number) {
+  const start = getPeriodStart(referenceDate, startDay)
+  const startMonth = start.getMonth()
+  const startYear = start.getFullYear()
+
+  let endYear = startYear
+  let endMonth = startMonth + 1
+  if (endMonth > 11) {
+    endMonth = 0
+    endYear += 1
+  }
+
+  const maxDaysInEndMonth = new Date(endYear, endMonth + 1, 0).getDate()
+  const endDay = startDay - 1
+  if (endDay === 0) {
+    const maxDaysInStartMonth = new Date(startYear, startMonth + 1, 0).getDate()
+    return {
+      start,
+      end: new Date(startYear, startMonth, maxDaysInStartMonth, 23, 59, 59, 999)
+    }
+  }
+
+  const end = new Date(endYear, endMonth, Math.min(endDay, maxDaysInEndMonth), 23, 59, 59, 999)
+  return { start, end }
+}
+
+function startOfCalendarGrid(periodStart: Date, weekStartIndex = 0): Date {
+  const firstDow = periodStart.getDay()
   const offset = (firstDow - weekStartIndex + 7) % 7
-  const gridStart = new Date(firstDayOfMonth)
-  gridStart.setDate(firstDayOfMonth.getDate() - offset)
+  const gridStart = new Date(periodStart)
+  gridStart.setDate(periodStart.getDate() - offset)
   return gridStart
 }
 
 function createCalendarCells(
-  monthDate: Date,
+  periodStart: Date,
+  periodEnd: Date,
   events: CalendarEvent[],
   weekStartIndex = 0
 ): CalendarCell[] {
   const today = new Date()
-  const gridStart = startOfCalendarGrid(monthDate, weekStartIndex)
+  const gridStart = startOfCalendarGrid(periodStart, weekStartIndex)
   const cells: CalendarCell[] = []
 
   for (let index = 0; index < 42; index += 1) {
     const cellDate = new Date(gridStart)
     cellDate.setDate(gridStart.getDate() + index)
+    cellDate.setHours(0, 0, 0, 0)
+
+    const cellTime = cellDate.getTime()
+    const isInPeriod = cellTime >= periodStart.getTime() && cellTime <= periodEnd.getTime()
 
     cells.push({
       date: cellDate,
-      isCurrentMonth: cellDate.getMonth() === monthDate.getMonth(),
+      isCurrentMonth: isInPeriod,
       isToday: isSameDay(cellDate, today),
       events: events.filter((event) => isSameDay(event.date, cellDate))
     })
@@ -100,22 +153,44 @@ type TransactionsProps = {
 }
 
 function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Element {
-  const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(new Date()))
+  const [visibleMonth, setVisibleMonth] = useState(() => new Date())
+  const [monthStartDate, setMonthStartDate] = useState<number>(1)
   const isLightTheme = theme === 'light'
 
+  useEffect(() => {
+    if (window.api?.getConfigurationValue) {
+      window.api.getConfigurationValue('MONTH_START_DATE').then((val) => {
+        if (val?.configuration_value) {
+          const parsed = parseInt(val.configuration_value, 10)
+          if (!isNaN(parsed) && parsed >= 1 && parsed <= 31) {
+            setMonthStartDate(parsed)
+          }
+        }
+      })
+    }
+  }, [])
+
+  const { start: periodStart, end: periodEnd } = useMemo(() => {
+    return getPeriodBoundaries(visibleMonth, monthStartDate)
+  }, [visibleMonth, monthStartDate])
+
   const calendarEvents = useMemo<CalendarEvent[]>(() => {
-    return eventSeed.map((event) => ({
-      title: event.title,
-      category: event.category,
-      date: new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), event.dayOffset)
-    }))
-  }, [visibleMonth])
+    return eventSeed.map((event) => {
+      const eventDate = new Date(periodStart)
+      eventDate.setDate(periodStart.getDate() + event.dayOffset - 1)
+      return {
+        title: event.title,
+        category: event.category,
+        date: eventDate
+      }
+    })
+  }, [periodStart])
 
   const computedWeekStartIndex = weekStart && weekStart.toLowerCase() === 'monday' ? 1 : 0
 
   const calendarCells = useMemo(
-    () => createCalendarCells(visibleMonth, calendarEvents, computedWeekStartIndex),
-    [calendarEvents, visibleMonth, computedWeekStartIndex]
+    () => createCalendarCells(periodStart, periodEnd, calendarEvents, computedWeekStartIndex),
+    [calendarEvents, periodStart, periodEnd, computedWeekStartIndex]
   )
 
   const displayedWeekdayLabels = useMemo(() => {
@@ -135,30 +210,15 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
   )
 
   const navigateMonth = (direction: -1 | 1): void => {
-    setVisibleMonth((currentMonth) => {
-      const nextMonth = new Date(currentMonth)
-      nextMonth.setMonth(currentMonth.getMonth() + direction)
-      nextMonth.setDate(1)
-      return nextMonth
-    })
+    setVisibleMonth((currentMonth) => addMonths(currentMonth, direction))
   }
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') {
-        setVisibleMonth((currentMonth) => {
-          const next = new Date(currentMonth)
-          next.setMonth(currentMonth.getMonth() - 1)
-          next.setDate(1)
-          return next
-        })
+        setVisibleMonth((currentMonth) => addMonths(currentMonth, -1))
       } else if (e.key === 'ArrowRight') {
-        setVisibleMonth((currentMonth) => {
-          const next = new Date(currentMonth)
-          next.setMonth(currentMonth.getMonth() + 1)
-          next.setDate(1)
-          return next
-        })
+        setVisibleMonth((currentMonth) => addMonths(currentMonth, 1))
       }
     }
 
@@ -204,7 +264,7 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => setVisibleMonth(startOfMonth(new Date()))}
+            onClick={() => setVisibleMonth(new Date())}
             className={monthActionButtonClassName}
             title="Go to current month"
             aria-label="Go to current month"

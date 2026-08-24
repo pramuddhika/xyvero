@@ -55,10 +55,10 @@ const currencyOptions: SelectOption[] = currencyCodes.data
   })
   .sort((a, b) => a.value.localeCompare(b.value))
 
-// const monthStartOptions: SelectOption[] = Array.from({ length: 30 }, (_, index) => {
-//   const day = String(index + 1)
-//   return { value: day, label: day }
-// })
+const monthStartOptions: SelectOption[] = Array.from({ length: 30 }, (_, index) => {
+  const day = String(index + 1)
+  return { value: day, label: day }
+})
 
 const weekStartOptions: SelectOption[] = [
   { value: 'Monday', label: 'Monday' },
@@ -207,12 +207,12 @@ function Settings({ configuration, onConfigurationUpdated }: SettingsProps): Rea
     return currencyOptions.find((option) => option.value === currencyValue) ?? currencyOptions[0]
   }, [configurationMap])
 
-  // const resolvedMonthStart = useMemo(() => {
-  //   const monthStartValue = configurationMap.get('MONTH_START_DATE')
-  //   return (
-  //     monthStartOptions.find((option) => option.value === monthStartValue) ?? monthStartOptions[0]
-  //   )
-  // }, [configurationMap])
+  const resolvedMonthStart = useMemo(() => {
+    const monthStartValue = configurationMap.get('MONTH_START_DATE')
+    return (
+      monthStartOptions.find((option) => option.value === monthStartValue) ?? monthStartOptions[0]
+    )
+  }, [configurationMap])
 
   const resolvedWeekStart = useMemo(() => {
     const weekStartValue = configurationMap.get('WEEK_START_DATE')
@@ -269,7 +269,7 @@ function Settings({ configuration, onConfigurationUpdated }: SettingsProps): Rea
           </div>
         </div>
 
-        {/* <div className="setting-row">
+        <div className="setting-row">
           <div className="setting-description-card">
             <div className="setting-header">
               <h4>Account Month Start Date</h4>
@@ -294,7 +294,7 @@ function Settings({ configuration, onConfigurationUpdated }: SettingsProps): Rea
 
             <p>Set the day that starts your monthly cycle, budgets, and summaries.</p>
           </div>
-        </div> */}
+        </div>
 
         <div className="setting-row">
           <div className="setting-description-card">
