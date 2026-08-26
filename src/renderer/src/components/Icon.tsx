@@ -1,4 +1,4 @@
-/* eslint-disable prettier/prettier */
+/* eslint-disable react-refresh/only-export-components */
 import React from 'react'
 import {
   Circle,
@@ -55,7 +55,14 @@ import {
   MapPin,
   Sun,
   Moon,
-  Star
+  Star,
+  Layers,
+  Banknote,
+  ShieldCheck,
+  ShoppingBag,
+  Sparkles,
+  Smile,
+  Tag
 } from 'lucide-react'
 
 export const Icons = {
@@ -66,9 +73,14 @@ export const Icons = {
   food: Utensils,
   fuel: Fuel,
   car: Car,
+  transport: Car,
   savings: PiggyBank,
   card: CreditCard,
   salary: Briefcase,
+  freelance: Laptop,
+  investment: TrendingUp,
+  entertainment: Gamepad2,
+  other: Layers,
   coffee: Coffee,
   pizza: Pizza,
   beer: Beer,
@@ -113,7 +125,16 @@ export const Icons = {
   map: MapPin,
   sun: Sun,
   moon: Moon,
-  star: Star
+  star: Star,
+  layers: Layers,
+  cash: Banknote,
+  shield: ShieldCheck,
+  bag: ShoppingBag,
+  sparkles: Sparkles,
+  smile: Smile,
+  tag: Tag,
+  piggybank: PiggyBank,
+  landmark: Landmark
 } as const
 
 export const iconsList = Object.keys(Icons) as Array<keyof typeof Icons>

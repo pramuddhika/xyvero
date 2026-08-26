@@ -83,7 +83,7 @@ function createTables(database: Database.Database): void {
     CREATE TABLE IF NOT EXISTS category (
       category_id INTEGER PRIMARY KEY,
       category_name VARCHAR(100) NOT NULL,
-      category_amount INTEGER NOT NULL DEFAULT 0,
+      category_amount REAL NOT NULL DEFAULT 0.00,
       category_group_id INTEGER NOT NULL REFERENCES categoryTypes(category_id),
       category_icon VARCHAR(100) NOT NULL DEFAULT 'circle',
       category_colour VARCHAR(7) NOT NULL DEFAULT '#6366f1'
@@ -91,7 +91,7 @@ function createTables(database: Database.Database): void {
     CREATE TABLE IF NOT EXISTS accounts (
       account_id INTEGER PRIMARY KEY,
       account_name VARCHAR(100) NOT NULL,
-      account_amount INTEGER NOT NULL DEFAULT 0,
+      account_amount REAL NOT NULL DEFAULT 0.00,
       account_type_id INTEGER NOT NULL REFERENCES accountTypes(account_type_id),
       account_color VARCHAR(7) NOT NULL DEFAULT '#6366f1',
       account_icon VARCHAR(100) NOT NULL DEFAULT 'circle'
@@ -121,6 +121,37 @@ function createTables(database: Database.Database): void {
     VALUES
       (1, 'IN', 'In'),
       (2, 'OUT', 'Out');
+
+    INSERT OR IGNORE INTO category (
+      category_id,
+      category_name,
+      category_amount,
+      category_group_id,
+      category_icon,
+      category_colour
+    )
+    VALUES
+      (1, 'Salary', 0.00, 1, 'salary', '#12B886'),
+      (2, 'Freelance', 0.00, 1, 'freelance', '#339AF0'),
+      (3, 'Investment', 0.00, 1, 'investment', '#845EF7'),
+      (4, 'Other', 0.00, 1, 'other', '#FCC419'),
+      (5, 'Food', 0.00, 2, 'food', '#FA5252'),
+      (6, 'Transport', 0.00, 2, 'transport', '#FD7E14'),
+      (7, 'Entertainment', 0.00, 2, 'entertainment', '#E64980'),
+      (8, 'Other', 0.00, 2, 'other', '#868E96');
+
+    INSERT OR IGNORE INTO accounts (
+      account_id,
+      account_name,
+      account_amount,
+      account_type_id,
+      account_color,
+      account_icon
+    )
+    VALUES
+      (1, 'Wallet', 0.00, 1, '#12B886', 'wallet'),
+      (2, 'Bank Account', 0.00, 2, '#339AF0', 'bank'),
+      (3, 'Piggy Bank', 0.00, 3, '#F783AC', 'savings');
   `)
 }
 
@@ -245,6 +276,7 @@ export function addCategory(
   categoryColour: string
 ): number {
   const database = getDatabase()
+  const cleanAmount = parseFloat(Number(categoryAmount || 0).toFixed(2))
   const result = database
     .prepare(
       `
@@ -257,7 +289,7 @@ export function addCategory(
         ) VALUES (?, ?, ?, ?, ?)
       `
     )
-    .run(categoryName, categoryAmount, categoryGroupId, categoryIcon, categoryColour)
+    .run(categoryName, cleanAmount, categoryGroupId, categoryIcon, categoryColour)
   return result.lastInsertRowid as number
 }
 
@@ -288,6 +320,7 @@ export function addAccount(
   accountColor: string
 ): number {
   const database = getDatabase()
+  const cleanAmount = parseFloat(Number(accountAmount || 0).toFixed(2))
   const result = database
     .prepare(
       `
@@ -300,6 +333,6 @@ export function addAccount(
         ) VALUES (?, ?, ?, ?, ?)
       `
     )
-    .run(accountName, accountAmount, accountTypeId, accountIcon, accountColor)
+    .run(accountName, cleanAmount, accountTypeId, accountIcon, accountColor)
   return result.lastInsertRowid as number
 }

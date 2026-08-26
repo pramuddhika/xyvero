@@ -1,13 +1,8 @@
-/* eslint-disable prettier/prettier */
 import React, { useMemo, useState } from 'react'
 import Select, { type StylesConfig, type Theme } from 'react-select'
 import currencyCodes from 'currency-codes'
-
-type ConfigurationRecord = {
-  configuration_id: number
-  configuration_key: string
-  configuration_value: string
-}
+import { getCurrencySymbol } from '../utils/currency'
+import type { ConfigurationRecord, ConfigurationKey } from '../types'
 
 type SettingsProps = {
   configuration: ConfigurationRecord[]
@@ -19,28 +14,6 @@ type SettingsProps = {
 type SelectOption = {
   value: string
   label: string
-}
-
-type ConfigurationKey =
-  | 'CURRENCY_TYPE'
-  | 'MONTH_START_DATE'
-  | 'WEEK_START_DATE'
-  | 'FIRST_VIEW'
-  | 'THEME'
-
-const getCurrencySymbol = (currencyCode: string): string => {
-  try {
-    const parts = new Intl.NumberFormat('en', {
-      style: 'currency',
-      currency: currencyCode,
-      currencyDisplay: 'narrowSymbol'
-    }).formatToParts(1)
-
-    const symbol = parts.find((part) => part.type === 'currency')?.value ?? ''
-    return symbol === currencyCode ? '' : symbol
-  } catch {
-    return ''
-  }
 }
 
 const currencyOptions: SelectOption[] = currencyCodes.data
@@ -64,11 +37,6 @@ const weekStartOptions: SelectOption[] = [
   { value: 'Monday', label: 'Monday' },
   { value: 'Sunday', label: 'Sunday' }
 ]
-
-// const firstViewOptions: SelectOption[] = [
-//   { value: 'Calendar', label: 'Calendar' },
-//   { value: 'Daily', label: 'Daily Transaction View' }
-// ]
 
 const themeOptions: SelectOption[] = [
   { value: 'dark', label: 'Dark' },
@@ -219,16 +187,6 @@ function Settings({ configuration, onConfigurationUpdated }: SettingsProps): Rea
     return weekStartOptions.find((option) => option.value === weekStartValue) ?? weekStartOptions[0]
   }, [configurationMap])
 
-  // const resolvedFirstView = useMemo(() => {
-  //   const firstViewValue = configurationMap.get('FIRST_VIEW')
-  // 
-  //   if (firstViewValue?.toLowerCase() === 'calender') {
-  //     return firstViewOptions[0]
-  //   }
-  // 
-  //   return firstViewOptions.find((option) => option.value === firstViewValue) ?? firstViewOptions[0]
-  // }, [configurationMap])
-
   const resolvedTheme = useMemo(() => {
     const themeValue = configurationMap.get('THEME')
     return themeOptions.find((option) => option.value === themeValue) ?? themeOptions[0]
@@ -322,33 +280,6 @@ function Settings({ configuration, onConfigurationUpdated }: SettingsProps): Rea
             <p>Choose whether weeks start on Monday or Sunday in the app.</p>
           </div>
         </div>
-
-        {/* <div className="setting-row">
-          <div className="setting-description-card">
-            <div className="setting-header">
-              <h4>First View</h4>
-              <div className="setting-select">
-                <Select
-                  inputId="firstView"
-                  options={firstViewOptions}
-                  value={resolvedFirstView}
-                  onChange={(selected) => {
-                    if (selected) {
-                      void updateConfigurationValue('FIRST_VIEW', selected.value)
-                    }
-                  }}
-                  styles={selectStyles}
-                  theme={selectTheme}
-                  isSearchable={false}
-                  isDisabled={savingKey === 'FIRST_VIEW'}
-                  placeholder="Select view"
-                />
-              </div>
-            </div>
-
-            <p>Choose which transactions view opens first when the app starts.</p>
-          </div>
-        </div> */}
 
         <div className="setting-row">
           <div className="setting-description-card">
