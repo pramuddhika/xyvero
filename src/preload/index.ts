@@ -66,6 +66,31 @@ const api = {
       categoryIcon,
       categoryColour
     ),
+  listAccounts: (): Promise<
+    Array<{
+      account_id: number
+      account_name: string
+      account_amount: number
+      account_type_id: number
+      account_color: string
+      account_icon: string
+    }>
+  > => electronAPI.ipcRenderer.invoke('db:listAccounts'),
+  addAccount: (
+    accountName: string,
+    accountAmount: number,
+    accountTypeId: number,
+    accountIcon: string,
+    accountColor: string
+  ): Promise<number> =>
+    electronAPI.ipcRenderer.invoke(
+      'db:addAccount',
+      accountName,
+      accountAmount,
+      accountTypeId,
+      accountIcon,
+      accountColor
+    ),
   getVersion: (): Promise<string> => electronAPI.ipcRenderer.invoke('app:getVersion'),
   updater: {
     onUpdateAvailable: (callback: (info: any) => void) => {

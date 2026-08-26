@@ -11,7 +11,9 @@ import {
   setConfigurationValue,
   listCategoryTypes,
   listCategories,
-  addCategory
+  addCategory,
+  listAccounts,
+  addAccount
 } from './src/main/database'
 
 function devDatabasePlugin(): Plugin {
@@ -139,6 +141,45 @@ function devDatabasePlugin(): Plugin {
               )
               res.setHeader('Content-Type', 'application/json')
               res.end(JSON.stringify({ categoryId }))
+            } catch (err) {
+              res.statusCode = 500
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: String(err) }))
+            }
+          })
+          return
+        }
+
+        if (pathname === '/api/listAccounts') {
+          try {
+            const data = listAccounts()
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify(data))
+          } catch (err) {
+            res.statusCode = 500
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ error: String(err) }))
+          }
+          return
+        }
+
+        if (pathname === '/api/addAccount' && req.method === 'POST') {
+          let body = ''
+          req.on('data', (chunk) => {
+            body += chunk
+          })
+          req.on('end', () => {
+            try {
+              const parsed = JSON.parse(body)
+              const accountId = addAccount(
+                parsed.accountName,
+                parsed.accountAmount,
+                parsed.accountTypeId,
+                parsed.accountIcon,
+                parsed.accountColor
+              )
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ accountId }))
             } catch (err) {
               res.statusCode = 500
               res.setHeader('Content-Type', 'application/json')

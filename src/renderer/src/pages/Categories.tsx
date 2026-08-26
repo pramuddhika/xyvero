@@ -184,18 +184,18 @@ function Categories(): React.JSX.Element {
         <div className="flex items-center justify-center p-12 text-[var(--theme-text-muted)] text-sm">
           <span>Loading categories...</span>
         </div>
+      ) : categories.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-12 text-[var(--theme-text-muted)] text-sm border border-dashed border-[var(--theme-border-soft)] rounded-xl mt-6">
+          <p>No categories created yet. Click &quot;Add new&quot; to create one.</p>
+        </div>
       ) : (
         <div className="category-accordions mt-6">
-          <details className="category-accordion" open>
-            <summary className="hover:bg-[var(--theme-surface-strong)] transition-colors">
-              <span>Income Categories ({incomeCategories.length})</span>
-            </summary>
-            <div className="category-accordion-body">
-              {incomeCategories.length === 0 ? (
-                <p className="text-[var(--theme-text-muted)] italic text-sm py-2">
-                  No income categories created yet. Click "Add new" to create one.
-                </p>
-              ) : (
+          {incomeCategories.length > 0 && (
+            <details className="category-accordion" open>
+              <summary className="hover:bg-[var(--theme-surface-strong)] transition-colors">
+                <span>Income Categories ({incomeCategories.length})</span>
+              </summary>
+              <div className="category-accordion-body">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-2">
                   {incomeCategories.map((cat) => (
                     <div
@@ -219,20 +219,16 @@ function Categories(): React.JSX.Element {
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-          </details>
+              </div>
+            </details>
+          )}
 
-          <details className="category-accordion" open>
-            <summary className="hover:bg-[var(--theme-surface-strong)] transition-colors">
-              <span>Expense Categories ({expenseCategories.length})</span>
-            </summary>
-            <div className="category-accordion-body">
-              {expenseCategories.length === 0 ? (
-                <p className="text-[var(--theme-text-muted)] italic text-sm py-2">
-                  No expense categories created yet. Click "Add new" to create one.
-                </p>
-              ) : (
+          {expenseCategories.length > 0 && (
+            <details className="category-accordion" open>
+              <summary className="hover:bg-[var(--theme-surface-strong)] transition-colors">
+                <span>Expense Categories ({expenseCategories.length})</span>
+              </summary>
+              <div className="category-accordion-body">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-2">
                   {expenseCategories.map((cat) => (
                     <div
@@ -256,9 +252,9 @@ function Categories(): React.JSX.Element {
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-          </details>
+              </div>
+            </details>
+          )}
         </div>
       )}
 
