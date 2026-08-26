@@ -74,8 +74,8 @@ function Accounts(): React.JSX.Element {
   } = useForm<FormValues>({
     defaultValues: {
       accountName: '',
-      accountAmount: '0',
-      accountTypeId: '1',
+      accountAmount: '',
+      accountTypeId: '',
       accountIcon: 'wallet',
       accountColor: '#6366f1'
     }
@@ -182,45 +182,45 @@ function Accounts(): React.JSX.Element {
         <div className="flex items-center justify-center p-12 text-[var(--theme-text-muted)] text-sm">
           <span>Loading accounts...</span>
         </div>
+      ) : accounts.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-12 text-[var(--theme-text-muted)] text-sm border border-dashed border-[var(--theme-border-soft)] rounded-xl mt-6">
+          <p>No accounts created yet. Click &quot;Add Account&quot; to create one.</p>
+        </div>
       ) : (
         <div className="category-accordions mt-6">
           {accountTypes.map((type) => {
             const typeAccounts = accounts.filter((a) => a.account_type_id === type.account_type_id)
+            if (typeAccounts.length === 0) return null
+
             return (
               <details key={type.account_type_id} className="category-accordion" open>
                 <summary className="hover:bg-[var(--theme-surface-strong)] transition-colors">
                   <span>{type.account_type_name} ({typeAccounts.length})</span>
                 </summary>
                 <div className="category-accordion-body">
-                  {typeAccounts.length === 0 ? (
-                    <p className="text-[var(--theme-text-muted)] italic text-sm py-2">
-                      No {type.account_type_name.toLowerCase()} accounts created yet. Click &quot;Add Account&quot; to create one.
-                    </p>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-2">
-                      {typeAccounts.map((acc) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-2">
+                    {typeAccounts.map((acc) => (
+                      <div
+                        key={acc.account_id}
+                        className="flex items-center gap-3 p-3 rounded-xl border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] shadow-xs"
+                      >
                         <div
-                          key={acc.account_id}
-                          className="flex items-center gap-3 p-3 rounded-xl border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] shadow-xs"
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0 shadow-inner"
+                          style={{ backgroundColor: acc.account_color }}
                         >
-                          <div
-                            className="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0 shadow-inner"
-                            style={{ backgroundColor: acc.account_color }}
-                          >
-                            <Icon icon={acc.account_icon} size={20} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-sm truncate text-[var(--theme-text-strong)]">
-                              {acc.account_name}
-                            </h4>
-                            <span className="text-xs text-[var(--theme-text-muted)] font-mono">
-                              {currencySymbol || currencyType} {acc.account_amount.toLocaleString()}
-                            </span>
-                          </div>
+                          <Icon icon={acc.account_icon} size={20} />
                         </div>
-                      ))}
-                    </div>
-                  )}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-sm truncate text-[var(--theme-text-strong)]">
+                            {acc.account_name}
+                          </h4>
+                          <span className="text-xs text-[var(--theme-text-muted)] font-mono">
+                            {currencySymbol || currencyType} {acc.account_amount.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </details>
             )
@@ -344,11 +344,10 @@ function Accounts(): React.JSX.Element {
                         key={iconName}
                         type="button"
                         onClick={() => setValue('accountIcon', iconName)}
-                        className={`aspect-square flex items-center justify-center rounded-md transition-all border ${
-                          isSelected
+                        className={`aspect-square flex items-center justify-center rounded-md transition-all border ${isSelected
                             ? 'scale-105 shadow-sm text-white'
                             : 'border-transparent text-[var(--theme-text-muted)] hover:bg-[var(--theme-control-hover)] hover:text-[var(--theme-text-strong)]'
-                        }`}
+                          }`}
                         style={{
                           backgroundColor: isSelected ? selectedColor : undefined,
                           borderColor: isSelected ? selectedColor : undefined
