@@ -10,12 +10,7 @@ import Categories from '../pages/Categories'
 import Settings from '../pages/Settings'
 import About from '../pages/About'
 import UpdateToast from '../components/UpdateToast'
-
-type ConfigurationRecord = {
-  configuration_id: number
-  configuration_key: string
-  configuration_value: string
-}
+import type { ConfigurationRecord } from '../types'
 
 function Layout(): React.JSX.Element {
   const [isNavOpen, setIsNavOpen] = useState(true)
