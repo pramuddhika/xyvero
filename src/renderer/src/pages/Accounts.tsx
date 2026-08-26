@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import React, { useCallback, useEffect, useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
-import { Plus } from 'lucide-react'
+import { Plus, Search, TrendingUp, TrendingDown, Wallet, X } from 'lucide-react'
 import { Icon } from '../components/Icon'
 import { COLOR_PALETTE } from '../components/Color'
 import IconPicker from '../components/IconPicker'
@@ -25,6 +25,7 @@ function Accounts(): React.JSX.Element {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState<string>('')
 
   const {
     register,
@@ -36,18 +37,51 @@ function Accounts(): React.JSX.Element {
   } = useForm<AccountFormValues>({
     defaultValues: {
       accountName: '',
-      accountAmount: '',
+      accountAmount: '0.00',
       accountTypeId: '',
       accountIcon: 'wallet',
       accountColor: '#6366f1'
     }
   })
 
-  // Watch fields for rendering active selections
+  // Watch fields for rendering active selections in the modal
   const selectedIcon = watch('accountIcon')
   const selectedColor = watch('accountColor')
 
   const currencySymbol = useMemo(() => getCurrencySymbol(currencyType), [currencyType])
+
+  // Aggregate totals for Assets (> 0), Liabilities (< 0), and Net Total
+  const { assetsTotal, liabilitiesTotal, netTotal, assetsCount, liabilitiesCount } = useMemo(() => {
+    let assets = 0
+    let liabilities = 0
+    let aCount = 0
+    let lCount = 0
+
+    for (const acc of accounts) {
+      if (acc.account_amount > 0) {
+        assets += acc.account_amount
+        aCount++
+      } else if (acc.account_amount < 0) {
+        liabilities += Math.abs(acc.account_amount)
+        lCount++
+      }
+    }
+
+    return {
+      assetsTotal: assets,
+      liabilitiesTotal: liabilities,
+      netTotal: assets - liabilities,
+      assetsCount: aCount,
+      liabilitiesCount: lCount
+    }
+  }, [accounts])
+
+  const formatAmount = (val: number): string => {
+    return val.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })
+  }
 
   const fetchData = useCallback(async (): Promise<void> => {
     setIsLoading(true)
@@ -80,7 +114,7 @@ function Accounts(): React.JSX.Element {
     setSaveError(null)
     reset({
       accountName: '',
-      accountAmount: '0',
+      accountAmount: '0.00',
       accountTypeId: accountTypes[0]?.account_type_id.toString() || '1',
       accountIcon: 'wallet',
       accountColor: COLOR_PALETTE[0] || '#6366f1'
@@ -98,7 +132,7 @@ function Accounts(): React.JSX.Element {
       }
 
       const amount = data.accountAmount === '' ? 0 : parseFloat(data.accountAmount)
-      if (isNaN(amount) || amount < 0) {
+      if (isNaN(amount)) {
         throw new Error('Please enter a valid amount.')
       }
 
@@ -107,9 +141,11 @@ function Accounts(): React.JSX.Element {
         throw new Error('Please select a valid account type.')
       }
 
+      const finalAmount = parseFloat(amount.toFixed(2))
+
       await window.api.addAccount(
         data.accountName.trim(),
-        Math.round(amount),
+        finalAmount,
         accountTypeId,
         data.accountIcon,
         data.accountColor
@@ -122,66 +158,241 @@ function Accounts(): React.JSX.Element {
     }
   }
 
+  // Filter accounts by search query
+  const filteredAccounts = useMemo(() => {
+    if (!searchQuery.trim()) return accounts
+    const query = searchQuery.toLowerCase().trim()
+    return accounts.filter((acc) => acc.account_name.toLowerCase().includes(query))
+  }, [accounts, searchQuery])
+
   return (
     <section className="content-area accounts-page relative">
-      <div className="categories-toolbar">
+      {/* Top Toolbar with Search on the left of Add button */}
+      <div className="categories-toolbar flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="categories-copy">
           <h2>Accounts</h2>
-          <p>Manage your financial accounts and view balances.</p>
+          <p>Manage your financial accounts, track assets, and monitor liabilities.</p>
         </div>
 
-        <button
-          type="button"
-          className="category-add-button flex items-center justify-center gap-2"
-          onClick={handleOpenModal}
-        >
-          <Plus size={18} />
-          <span>Add Account</span>
-        </button>
+        <div className="flex items-center gap-3 shrink-0">
+          {/* Search Input on the left side of Add Account button */}
+          {accounts.length > 0 && (
+            <div className="relative w-48 sm:w-64">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--theme-text-muted)] pointer-events-none"
+              />
+              <input
+                type="text"
+                placeholder="Search accounts..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm bg-[var(--theme-control-bg)] border border-[var(--theme-border-soft)] rounded-xl text-[var(--theme-text-strong)] placeholder:text-[var(--theme-text-muted)] focus:outline-none focus:border-emerald-500/50 transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--theme-text-muted)] hover:text-[var(--theme-text-strong)] p-0.5 rounded-full cursor-pointer"
+                  title="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          )}
+
+          <button
+            type="button"
+            className="category-add-button flex items-center justify-center gap-2 shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+            onClick={handleOpenModal}
+          >
+            <Plus size={18} />
+            <span>Add Account</span>
+          </button>
+        </div>
       </div>
 
+      {/* Top Summary Stats (Assets, Liabilities, Total Net Worth) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4 mt-2">
+        {/* Assets Card */}
+        <div className="flex items-center gap-3.5 p-4 rounded-2xl border border-blue-500/20 bg-blue-500/5 dark:bg-blue-500/10 shadow-xs transition-all hover:shadow-sm">
+          <div className="w-11 h-11 rounded-xl bg-blue-500/15 text-blue-500 flex items-center justify-center shrink-0">
+            <TrendingUp size={22} />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+                Assets
+              </span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 font-semibold">
+                {assetsCount}
+              </span>
+            </div>
+            <span className="text-lg sm:text-xl font-bold font-mono text-blue-600 dark:text-blue-400 mt-0.5 truncate">
+              {currencySymbol || currencyType} {formatAmount(assetsTotal)}
+            </span>
+          </div>
+        </div>
+
+        {/* Liabilities Card */}
+        <div className="flex items-center gap-3.5 p-4 rounded-2xl border border-red-500/20 bg-red-500/5 dark:bg-red-500/10 shadow-xs transition-all hover:shadow-sm">
+          <div className="w-11 h-11 rounded-xl bg-red-500/15 text-red-500 flex items-center justify-center shrink-0">
+            <TrendingDown size={22} />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-red-600 dark:text-red-400">
+                Liabilities
+              </span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-red-500/15 text-red-600 dark:text-red-400 font-semibold">
+                {liabilitiesCount}
+              </span>
+            </div>
+            <span className="text-lg sm:text-xl font-bold font-mono text-red-600 dark:text-red-400 mt-0.5 truncate">
+              {currencySymbol || currencyType} {formatAmount(liabilitiesTotal)}
+            </span>
+          </div>
+        </div>
+
+        {/* Total Net Balance Card */}
+        <div className="flex items-center gap-3.5 p-4 rounded-2xl border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] shadow-xs transition-all hover:shadow-sm">
+          <div className="w-11 h-11 rounded-xl bg-[var(--theme-control-bg)] text-[var(--theme-text-strong)] flex items-center justify-center shrink-0">
+            <Wallet size={22} />
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--theme-text-muted)]">
+              Total Balance
+            </span>
+            <span className="text-lg sm:text-xl font-bold font-mono text-[var(--theme-text-strong)] mt-0.5 truncate">
+              {netTotal < 0 ? '-' : ''}
+              {currencySymbol || currencyType} {formatAmount(Math.abs(netTotal))}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
       {isLoading ? (
         <div className="flex items-center justify-center p-12 text-[var(--theme-text-muted)] text-sm">
           <span>Loading accounts...</span>
         </div>
       ) : accounts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-12 text-[var(--theme-text-muted)] text-sm border border-dashed border-[var(--theme-border-soft)] rounded-xl mt-6">
-          <p>No accounts created yet. Click &quot;Add Account&quot; to create one.</p>
+        /* Empty State */
+        <div className="flex flex-col items-center justify-center p-12 text-center border border-dashed border-[var(--theme-border-soft)] rounded-2xl mt-6 bg-[var(--theme-surface-soft)]">
+          <div className="w-14 h-14 rounded-2xl bg-[var(--theme-control-bg)] flex items-center justify-center text-[var(--theme-text-muted)] mb-4 shadow-inner">
+            <Wallet size={28} />
+          </div>
+          <h3 className="text-base font-bold text-[var(--theme-text-strong)]">No accounts created yet</h3>
+          <p className="text-xs text-[var(--theme-text-muted)] max-w-sm mt-1 mb-5">
+            Add bank accounts, cash wallets, credit cards, or savings accounts to start tracking your net worth.
+          </p>
+          <button
+            type="button"
+            className="category-add-button flex items-center justify-center gap-2 shadow-sm"
+            onClick={handleOpenModal}
+          >
+            <Plus size={16} />
+            <span>Create First Account</span>
+          </button>
+        </div>
+      ) : filteredAccounts.length === 0 ? (
+        /* Search Empty State */
+        <div className="flex flex-col items-center justify-center p-10 text-center border border-dashed border-[var(--theme-border-soft)] rounded-2xl mt-6">
+          <Search size={24} className="text-[var(--theme-text-muted)] mb-2" />
+          <p className="text-sm text-[var(--theme-text-strong)] font-semibold">
+            No accounts matching &ldquo;{searchQuery}&rdquo;
+          </p>
+          <button
+            type="button"
+            onClick={() => setSearchQuery('')}
+            className="mt-3 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--theme-control-bg)] hover:bg-[var(--theme-control-hover)] text-[var(--theme-text-strong)] transition-colors"
+          >
+            Clear Search
+          </button>
         </div>
       ) : (
-        <div className="category-accordions mt-6">
+        /* Account Groups Accordions */
+        <div className="category-accordions mt-4">
           {accountTypes.map((type) => {
-            const typeAccounts = accounts.filter((a) => a.account_type_id === type.account_type_id)
+            const typeAccounts = filteredAccounts.filter((a) => a.account_type_id === type.account_type_id)
             if (typeAccounts.length === 0) return null
 
+            // Subtotal for this specific account group
+            const typeTotal = typeAccounts.reduce((sum, a) => sum + a.account_amount, 0)
+            const isGroupNegative = typeTotal < 0
+
             return (
-              <details key={type.account_type_id} className="category-accordion" open>
-                <summary className="hover:bg-[var(--theme-surface-strong)] transition-colors">
-                  <span>{type.account_type_name} ({typeAccounts.length})</span>
+              <details key={type.account_type_id} className="category-accordion group" open>
+                <summary className="hover:bg-[var(--theme-surface-strong)] transition-colors cursor-pointer select-none">
+                  <div className="flex items-center gap-2.5">
+                    <span>{type.account_type_name}</span>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--theme-chip-bg)] text-[var(--theme-text-muted)] font-semibold">
+                      {typeAccounts.length}
+                    </span>
+                  </div>
+
+                  {/* Group Subtotal Header */}
+                  <div className="flex items-center gap-2 mr-3 font-mono text-xs">
+                    <span className="text-[11px] text-[var(--theme-text-muted)] font-sans hidden sm:inline">
+                      Subtotal:
+                    </span>
+                    <span
+                      className={`font-semibold ${
+                        isGroupNegative
+                          ? 'text-red-500'
+                          : 'text-[var(--theme-text-strong)]'
+                      }`}
+                    >
+                      {isGroupNegative ? '-' : ''}
+                      {currencySymbol || currencyType} {formatAmount(Math.abs(typeTotal))}
+                    </span>
+                  </div>
                 </summary>
+
                 <div className="category-accordion-body">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-2">
-                    {typeAccounts.map((acc) => (
-                      <div
-                        key={acc.account_id}
-                        className="flex items-center gap-3 p-3 rounded-xl border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] shadow-xs"
-                      >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 py-1">
+                    {typeAccounts.map((acc) => {
+                      const isNegative = acc.account_amount < 0
+                      return (
                         <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center text-white shrink-0 shadow-inner"
-                          style={{ backgroundColor: acc.account_color }}
+                          key={acc.account_id}
+                          className="flex items-center gap-3.5 p-3.5 rounded-2xl border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] hover:border-emerald-500/40 hover:shadow-md transition-all group/card cursor-default"
                         >
-                          <Icon icon={acc.account_icon} size={20} />
+                          {/* Account Icon Badge */}
+                          <div
+                            className="w-11 h-11 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm transition-transform group-hover/card:scale-105"
+                            style={{ backgroundColor: acc.account_color }}
+                          >
+                            <Icon icon={acc.account_icon} size={22} />
+                          </div>
+
+                          {/* Account Name and Balance */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <h4 className="font-semibold text-sm truncate text-[var(--theme-text-strong)]">
+                                {acc.account_name}
+                              </h4>
+                              {isNegative && (
+                                <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-red-500/10 text-red-500 uppercase tracking-wider shrink-0">
+                                  Liability
+                                </span>
+                              )}
+                            </div>
+                            <span
+                              className={`text-xs font-mono font-semibold block mt-0.5 truncate ${
+                                isNegative
+                                  ? 'text-red-500'
+                                  : 'text-[var(--theme-text-strong)]'
+                              }`}
+                            >
+                              {currencySymbol || currencyType}{' '}
+                              {formatAmount(Math.abs(acc.account_amount))}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-sm truncate text-[var(--theme-text-strong)]">
-                            {acc.account_name}
-                          </h4>
-                          <span className="text-xs text-[var(--theme-text-muted)] font-mono">
-                            {currencySymbol || currencyType} {acc.account_amount.toLocaleString()}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </div>
               </details>
@@ -201,14 +412,14 @@ function Accounts(): React.JSX.Element {
         saveError={saveError}
       >
         {/* Type Select and Name Input */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
           <div className="flex flex-col gap-2">
             <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
               Account Type
             </label>
             <select
               {...register('accountTypeId', { required: true })}
-              className="w-full px-3 py-2 text-sm bg-[var(--color-background-mute)] border border-[var(--theme-border-soft)] rounded-lg text-[var(--theme-text-strong)] focus:outline-none focus:border-emerald-500/50 cursor-pointer"
+              className="w-full px-3.5 py-2.5 text-sm bg-[var(--color-background-mute)] border border-[var(--theme-border-soft)] rounded-xl text-[var(--theme-text-strong)] focus:outline-none focus:border-emerald-500/50 cursor-pointer transition-colors"
             >
               {accountTypes.map((t) => (
                 <option
@@ -234,7 +445,7 @@ function Accounts(): React.JSX.Element {
                 required: 'Account name is required',
                 maxLength: { value: 30, message: 'Max 30 characters allowed' }
               })}
-              className="w-full px-3 py-2 text-sm bg-[var(--theme-control-bg)] border border-[var(--theme-border-soft)] rounded-lg text-[var(--theme-text-strong)] focus:outline-none focus:border-emerald-500/50"
+              className="w-full px-3.5 py-2.5 text-sm bg-[var(--theme-control-bg)] border border-[var(--theme-border-soft)] rounded-xl text-[var(--theme-text-strong)] focus:outline-none focus:border-emerald-500/50 transition-colors"
             />
             {errors.accountName && (
               <span className="text-[11px] text-red-400 font-medium">
@@ -246,28 +457,29 @@ function Accounts(): React.JSX.Element {
 
         {/* Amount Input */}
         <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
-            Initial Balance / Amount
+          <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)] flex items-center justify-between">
+            <span>Initial Balance / Amount</span>
+            <span className="text-[11px] font-normal italic lowercase tracking-normal text-[var(--theme-text-muted)]">
+              (use - for liabilities)
+            </span>
           </label>
-          <div className="flex items-stretch rounded-lg border border-[var(--theme-border-soft)] bg-[var(--theme-control-bg)] overflow-hidden focus-within:border-emerald-500/50">
-            <span className="px-3 py-2 bg-[var(--theme-surface-strong)] text-sm font-semibold border-r border-[var(--theme-border-soft)] text-[var(--theme-text-muted)] min-w-[54px] flex items-center justify-center font-mono">
+          <div className="flex items-stretch rounded-xl border border-[var(--theme-border-soft)] bg-[var(--theme-control-bg)] overflow-hidden focus-within:border-emerald-500/50 transition-colors">
+            <span className="px-3.5 py-2.5 bg-[var(--theme-surface-strong)] text-sm font-semibold border-r border-[var(--theme-border-soft)] text-[var(--theme-text-muted)] min-w-[54px] flex items-center justify-center font-mono">
               {currencySymbol || currencyType}
             </span>
             <input
               type="number"
-              step="any"
-              min="0"
+              step="0.01"
               placeholder="0.00"
               onKeyDown={(e) => {
-                if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+                if (e.key === '+' || e.key === 'e' || e.key === 'E') {
                   e.preventDefault()
                 }
               }}
               {...register('accountAmount', {
-                required: 'Amount is required',
-                min: { value: 0, message: 'Amount cannot be negative' }
+                required: 'Amount is required'
               })}
-              className="flex-1 px-3 py-2 text-sm bg-transparent border-0 text-[var(--theme-text-strong)] focus:outline-none font-mono no-spinners"
+              className="flex-1 px-3.5 py-2.5 text-sm bg-transparent border-0 text-[var(--theme-text-strong)] focus:outline-none font-mono no-spinners"
             />
           </div>
           {errors.accountAmount && (
