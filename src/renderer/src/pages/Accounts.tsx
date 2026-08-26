@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { Plus, X, Check } from 'lucide-react'
 import { Icon, iconsList } from '../components/Icon'
+import { COLOR_PALETTE } from '../components/Color'
 
 type AccountTypeRecord = {
   account_type_id: number
@@ -41,20 +42,6 @@ const getCurrencySymbol = (currencyCode: string): string => {
     return ''
   }
 }
-
-// 40 Beautiful colors spanning across hues
-const COLOR_PALETTE = [
-  '#FF6B6B', '#FA5252', '#E03131', '#C22525', // Reds/Corals
-  '#F783AC', '#E64980', '#D01B5E',             // Pinks/Roses
-  '#B197FC', '#9775FA', '#845EF7', '#7048E8', // Purples
-  '#74C0FC', '#339AF0', '#228BE6', '#1C7ED6', // Blues
-  '#66D9E8', '#3BC9DB', '#15AABF', '#0C8599', // Cyans/Teals
-  '#63E6BE', '#38D9A9', '#12B886', '#0CA678', // Greens/Emeralds
-  '#C0EB75', '#94D82D', '#74B816', '#5C940D', // Limes/Olives
-  '#FFE066', '#FFD43B', '#FCC419', '#F59F00', // Yellows/Ambers
-  '#FFD8A8', '#FFA94D', '#FF922B', '#FD7E14', // Oranges
-  '#CED4DA', '#ADB5BD', '#868E96', '#495057'  // Grays/Slates
-]
 
 function Accounts(): React.JSX.Element {
   const [accounts, setAccounts] = useState<AccountRecord[]>([])
@@ -331,12 +318,12 @@ function Accounts(): React.JSX.Element {
                 )}
               </div>
 
-              {/* Icon Selector Grid (Exactly 2 Lines) */}
+              {/* Icon Selector Grid (Fixed Size with Scroll) */}
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
                   Account Icon
                 </label>
-                <div className="grid grid-cols-[repeat(28,minmax(0,1fr))] gap-1 p-2 border border-[var(--theme-border-soft)] rounded-lg bg-[var(--theme-control-bg)]">
+                <div className="grid grid-cols-12 sm:grid-cols-14 md:grid-cols-16 gap-1.5 p-2 border border-[var(--theme-border-soft)] rounded-lg bg-[var(--theme-control-bg)] max-h-28 overflow-y-auto custom-scrollbar">
                   {iconsList.map((iconName) => {
                     const isSelected = selectedIcon === iconName
                     return (
@@ -344,31 +331,32 @@ function Accounts(): React.JSX.Element {
                         key={iconName}
                         type="button"
                         onClick={() => setValue('accountIcon', iconName)}
-                        className={`aspect-square flex items-center justify-center rounded-md transition-all border ${isSelected
+                        className={`aspect-square flex items-center justify-center rounded-md transition-all border cursor-pointer ${
+                          isSelected
                             ? 'scale-105 shadow-sm text-white'
                             : 'border-transparent text-[var(--theme-text-muted)] hover:bg-[var(--theme-control-hover)] hover:text-[var(--theme-text-strong)]'
-                          }`}
+                        }`}
                         style={{
                           backgroundColor: isSelected ? selectedColor : undefined,
                           borderColor: isSelected ? selectedColor : undefined
                         }}
                         title={iconName}
                       >
-                        <Icon icon={iconName} size={15} />
+                        <Icon icon={iconName} size={16} />
                       </button>
                     )
                   })}
                 </div>
               </div>
 
-              {/* Color Grid Picker (Exactly 2 Lines - 20 items per line) */}
+              {/* Color Grid Picker (Fixed Size with Scroll) */}
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
                   Account Color
                 </label>
-                <div className="grid grid-cols-20 gap-1.5 p-2 border border-[var(--theme-border-soft)] rounded-lg bg-[var(--theme-control-bg)]">
+                <div className="grid grid-cols-12 sm:grid-cols-14 md:grid-cols-16 gap-1.5 p-2 border border-[var(--theme-border-soft)] rounded-lg bg-[var(--theme-control-bg)] max-h-28 overflow-y-auto custom-scrollbar">
                   {COLOR_PALETTE.map((colorHex) => {
-                    const isSelected = selectedColor === colorHex
+                    const isSelected = selectedColor.toLowerCase() === colorHex.toLowerCase()
                     return (
                       <button
                         key={colorHex}

@@ -121,6 +121,37 @@ function createTables(database: Database.Database): void {
     VALUES
       (1, 'IN', 'In'),
       (2, 'OUT', 'Out');
+
+    INSERT OR IGNORE INTO category (
+      category_id,
+      category_name,
+      category_amount,
+      category_group_id,
+      category_icon,
+      category_colour
+    )
+    VALUES
+      (1, 'Salary', 0, 1, 'salary', '#12B886'),
+      (2, 'Freelance', 0, 1, 'freelance', '#339AF0'),
+      (3, 'Investment', 0, 1, 'investment', '#845EF7'),
+      (4, 'Other', 0, 1, 'other', '#FCC419'),
+      (5, 'Food', 0, 2, 'food', '#FA5252'),
+      (6, 'Transport', 0, 2, 'transport', '#FD7E14'),
+      (7, 'Entertainment', 0, 2, 'entertainment', '#E64980'),
+      (8, 'Other', 0, 2, 'other', '#868E96');
+
+    INSERT OR IGNORE INTO accounts (
+      account_id,
+      account_name,
+      account_amount,
+      account_type_id,
+      account_color,
+      account_icon
+    )
+    VALUES
+      (1, 'Wallet', 0, 1, '#12B886', 'wallet'),
+      (2, 'Bank Account', 0, 2, '#339AF0', 'bank'),
+      (3, 'Piggy Bank', 0, 3, '#F783AC', 'savings');
   `)
 }
 
