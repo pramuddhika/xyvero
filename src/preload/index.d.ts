@@ -28,12 +28,29 @@ type CategoryRecord = {
   category_colour: string
 }
 
+type AccountRecord = {
+  account_id: number
+  account_name: string
+  account_amount: number
+  account_type_id: number
+  account_color: string
+  account_icon: string
+}
+
 interface AppApi {
   getDatabasePath: () => Promise<string>
   listConfiguration: () => Promise<ConfigurationRecord[]>
   getConfigurationValue: (configurationKey: string) => Promise<ConfigurationRecord | undefined>
   setConfigurationValue: (configurationKey: string, configurationValue: string) => Promise<void>
   listAccountTypes: () => Promise<AccountTypeRecord[]>
+  listAccounts: () => Promise<AccountRecord[]>
+  addAccount: (
+    accountName: string,
+    accountAmount: number,
+    accountTypeId: number,
+    accountIcon: string,
+    accountColor: string
+  ) => Promise<number>
   listCategoryTypes: () => Promise<CategoryTypeRecord[]>
   listCategories: () => Promise<CategoryRecord[]>
   addCategory: (

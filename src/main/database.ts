@@ -31,6 +31,15 @@ export type CategoryRecord = {
   category_colour: string
 }
 
+export type AccountRecord = {
+  account_id: number
+  account_name: string
+  account_amount: number
+  account_type_id: number
+  account_color: string
+  account_icon: string
+}
+
 let db: Database.Database | null = null
 
 type AppLike = {
@@ -78,6 +87,14 @@ function createTables(database: Database.Database): void {
       category_group_id INTEGER NOT NULL REFERENCES categoryTypes(category_id),
       category_icon VARCHAR(100) NOT NULL DEFAULT 'circle',
       category_colour VARCHAR(7) NOT NULL DEFAULT '#6366f1'
+    );
+    CREATE TABLE IF NOT EXISTS accounts (
+      account_id INTEGER PRIMARY KEY,
+      account_name VARCHAR(100) NOT NULL,
+      account_amount INTEGER NOT NULL DEFAULT 0,
+      account_type_id INTEGER NOT NULL REFERENCES accountTypes(account_type_id),
+      account_color VARCHAR(7) NOT NULL DEFAULT '#6366f1',
+      account_icon VARCHAR(100) NOT NULL DEFAULT 'circle'
     );
   `)
 
@@ -241,5 +258,48 @@ export function addCategory(
       `
     )
     .run(categoryName, categoryAmount, categoryGroupId, categoryIcon, categoryColour)
+  return result.lastInsertRowid as number
+}
+
+export function listAccounts(): AccountRecord[] {
+  const database = getDatabase()
+  return database
+    .prepare(
+      `
+        SELECT
+          account_id,
+          account_name,
+          account_amount,
+          account_type_id,
+          account_color,
+          account_icon
+        FROM accounts
+        ORDER BY account_id ASC
+      `
+    )
+    .all() as AccountRecord[]
+}
+
+export function addAccount(
+  accountName: string,
+  accountAmount: number,
+  accountTypeId: number,
+  accountIcon: string,
+  accountColor: string
+): number {
+  const database = getDatabase()
+  const result = database
+    .prepare(
+      `
+        INSERT INTO accounts (
+          account_name,
+          account_amount,
+          account_type_id,
+          account_icon,
+          account_color
+        ) VALUES (?, ?, ?, ?, ?)
+      `
+    )
+    .run(accountName, accountAmount, accountTypeId, accountIcon, accountColor)
   return result.lastInsertRowid as number
 }

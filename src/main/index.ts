@@ -13,7 +13,9 @@ import {
   setConfigurationValue,
   listCategoryTypes,
   listCategories,
-  addCategory
+  addCategory,
+  listAccounts,
+  addAccount
 } from './database'
 
 const icon = nativeImage.createFromPath(iconPath)
@@ -129,6 +131,20 @@ app.whenReady().then(() => {
       categoryColour: string
     ) => {
       return addCategory(categoryName, categoryAmount, categoryGroupId, categoryIcon, categoryColour)
+    }
+  )
+  ipcMain.handle('db:listAccounts', () => listAccounts())
+  ipcMain.handle(
+    'db:addAccount',
+    (
+      _,
+      accountName: string,
+      accountAmount: number,
+      accountTypeId: number,
+      accountIcon: string,
+      accountColor: string
+    ) => {
+      return addAccount(accountName, accountAmount, accountTypeId, accountIcon, accountColor)
     }
   )
   ipcMain.handle('app:getVersion', () => app.getVersion())

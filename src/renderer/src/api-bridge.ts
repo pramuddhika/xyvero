@@ -42,6 +42,37 @@ if (typeof window !== 'undefined' && !window.api) {
       const res = await fetch('/api/listAccountTypes')
       return parseJson(res)
     },
+    listAccounts: async () => {
+      const res = await fetch('/api/listAccounts')
+      return parseJson(res)
+    },
+    addAccount: async (
+      accountName: string,
+      accountAmount: number,
+      accountTypeId: number,
+      accountIcon: string,
+      accountColor: string
+    ): Promise<number> => {
+      const res = await fetch('/api/addAccount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountName,
+          accountAmount,
+          accountTypeId,
+          accountIcon,
+          accountColor
+        })
+      })
+      const result = await parseJson<{ accountId?: number; error?: string }>(res)
+      if (result.error) {
+        throw new Error(result.error)
+      }
+      if (typeof result.accountId !== 'number') {
+        throw new Error('Failed to save account: invalid server response')
+      }
+      return result.accountId
+    },
     listCategoryTypes: async () => {
       const res = await fetch('/api/listCategoryTypes')
       return parseJson(res)
@@ -68,7 +99,13 @@ if (typeof window !== 'undefined' && !window.api) {
           categoryColour
         })
       })
-      const result = await parseJson<{ categoryId: number }>(res)
+      const result = await parseJson<{ categoryId?: number; error?: string }>(res)
+      if (result.error) {
+        throw new Error(result.error)
+      }
+      if (typeof result.categoryId !== 'number') {
+        throw new Error('Failed to save category: invalid server response')
+      }
       return result.categoryId
     },
     getVersion: async () => '0.0.1',
