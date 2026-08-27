@@ -48,3 +48,23 @@ export type CategoryRecord = {
   category_colour: string
   is_active: number
 }
+
+// ─── Transaction Types ────────────────────────────────────────────────────────
+
+export type TransactionTypeRecord = {
+  transaction_type_id: number
+  transaction_type_name: string
+}
+
+export type TransactionRecord = {
+  time_stamp: string
+  transaction_time: string
+  transaction_type_id: number
+  to_account_id: number
+  from_account_id?: number | null
+  category_id?: number | null
+  amount: number
+  fees?: number | null
+  note: string
+}
+

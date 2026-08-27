@@ -39,6 +39,23 @@ type AccountRecord = {
   is_active: number
 }
 
+type TransactionTypeRecord = {
+  transaction_type_id: number
+  transaction_type_name: string
+}
+
+type TransactionRecord = {
+  time_stamp: string
+  transaction_time: string
+  transaction_type_id: number
+  to_account_id: number
+  from_account_id?: number | null
+  category_id?: number | null
+  amount: number
+  fees?: number | null
+  note: string
+}
+
 type UpdateInfo = {
   version?: string
   [key: string]: unknown
@@ -67,6 +84,18 @@ interface AppApi {
     categoryIcon: string,
     categoryColour: string
   ) => Promise<number>
+  listTransactionTypes: () => Promise<TransactionTypeRecord[]>
+  listTransactions: () => Promise<TransactionRecord[]>
+  addTransaction: (
+    transactionTime: string,
+    transactionTypeId: number,
+    toAccountId: number,
+    fromAccountId: number | null | undefined,
+    categoryId: number | null | undefined,
+    amount: number,
+    fees: number | undefined,
+    note: string
+  ) => Promise<string>
   getVersion: () => Promise<string>
   updater: {
     onUpdateAvailable: (callback: (info: UpdateInfo) => void) => () => void

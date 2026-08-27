@@ -267,8 +267,27 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
     return () => window.removeEventListener('keydown', handler)
   }, [isDrawerOpen])
 
-  const handleSaveTransaction = (data: TransactionFormData): void => {
-    console.log('New transaction data submitted:', data)
+  const handleSaveTransaction = async (data: TransactionFormData): Promise<void> => {
+    try {
+      if (window.api?.addTransaction) {
+        await window.api.addTransaction(
+          data.transactionTime,
+          data.transactionTypeId,
+          data.toAccountId,
+          data.fromAccountId,
+          data.categoryId,
+          data.amount,
+          data.fees,
+          data.note
+        )
+      }
+      if (window.api?.listAccounts) {
+        const updatedAccounts = await window.api.listAccounts()
+        setAccounts(updatedAccounts || [])
+      }
+    } catch (err) {
+      console.error('Failed to save transaction to database:', err)
+    }
     setIsDrawerOpen(false)
   }
 

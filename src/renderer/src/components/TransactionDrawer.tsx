@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import {
   Plus,
   X,
@@ -9,21 +9,31 @@ import {
   Calendar as CalendarIcon,
   Wallet,
   Layers,
-  FileText
+  FileText,
+  ChevronDown,
+  Check
 } from 'lucide-react'
+import { Icon } from './Icon'
 import type { AccountRecord, CategoryRecord } from '../types'
 
 export type TransactionType = 'Expense' | 'Income' | 'Transfer'
 
+const TRANSACTION_TYPE_MAP: Record<TransactionType, number> = {
+  Income: 1,
+  Expense: 2,
+  Transfer: 3
+}
+
 export interface TransactionFormData {
+  transactionTypeId: number
   transactionType: TransactionType
   amount: number
   toAccountId: number
-  fromAccountId?: number
-  categoryId?: number
+  fromAccountId?: number | null
+  categoryId?: number | null
   transactionTime: string
   fees?: number
-  note?: string
+  note: string
 }
 
 interface TransactionDrawerProps {
@@ -34,6 +44,260 @@ interface TransactionDrawerProps {
   currencySymbol: string
   currencyType: string
   onSave?: (data: TransactionFormData) => void | Promise<void>
+}
+
+/**
+ * Custom styled Account Dropdown with Account Icon and Color Badge
+ */
+interface AccountSelectProps {
+  accounts: AccountRecord[]
+  selectedId: string
+  onChange: (id: string) => void
+  currencySymbol: string
+  currencyType: string
+  placeholder?: string
+}
+
+function AccountSelect({
+  accounts,
+  selectedId,
+  onChange,
+  currencySymbol,
+  currencyType,
+  placeholder = 'Select account'
+}: AccountSelectProps): React.JSX.Element {
+  const [isOpen, setIsOpen] = useState<boolean>(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const selectedAccount = useMemo(() => {
+    return accounts.find((a) => a.account_id.toString() === selectedId)
+  }, [accounts, selectedId])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent): void => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="w-full px-3.5 py-2.5 text-sm bg-[var(--color-background-mute)] border border-[var(--theme-border-soft)] hover:border-emerald-500/40 rounded-xl text-[var(--theme-text-strong)] flex items-center justify-between gap-2.5 transition-all cursor-pointer shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+      >
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          {selectedAccount ? (
+            <>
+              <div
+                className="w-6.5 h-6.5 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs"
+                style={{ backgroundColor: selectedAccount.account_color }}
+              >
+                <Icon icon={selectedAccount.account_icon} size={15} />
+              </div>
+              <span className="font-semibold truncate text-[var(--theme-text-strong)] text-sm">
+                {selectedAccount.account_name}
+              </span>
+              <span className="text-xs text-[var(--theme-text-muted)] font-mono font-medium ml-auto pr-1 truncate shrink-0">
+                {currencySymbol || currencyType}{' '}
+                {selectedAccount.account_amount.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })}
+              </span>
+            </>
+          ) : (
+            <span className="text-[var(--theme-text-muted)]">{placeholder}</span>
+          )}
+        </div>
+        <ChevronDown
+          size={16}
+          className={`text-[var(--theme-text-muted)] shrink-0 transition-transform duration-200 ${
+            isOpen ? 'rotate-180 text-emerald-500' : ''
+          }`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 left-0 right-0 top-full mt-1.5 p-1.5 bg-[var(--color-background-soft)] border border-[var(--theme-border-soft)] rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scrollbar flex flex-col gap-1">
+          {accounts.length === 0 ? (
+            <div className="px-3 py-2 text-xs text-[var(--theme-text-muted)] text-center">
+              No accounts available
+            </div>
+          ) : (
+            accounts.map((acc) => {
+              const isSelected = acc.account_id.toString() === selectedId
+              return (
+                <button
+                  key={acc.account_id}
+                  type="button"
+                  onClick={() => {
+                    onChange(acc.account_id.toString())
+                    setIsOpen(false)
+                  }}
+                  className={`w-full flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-emerald-500/15 text-[var(--theme-text-strong)] font-semibold'
+                      : 'hover:bg-[var(--theme-control-hover)] text-[var(--theme-text-strong)]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div
+                      className="w-6.5 h-6.5 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs"
+                      style={{ backgroundColor: acc.account_color }}
+                    >
+                      <Icon icon={acc.account_icon} size={15} />
+                    </div>
+                    <span className="text-sm font-medium truncate flex-1">{acc.account_name}</span>
+                    <span className="text-xs text-[var(--theme-text-muted)] font-mono font-medium truncate shrink-0">
+                      {currencySymbol || currencyType}{' '}
+                      {acc.account_amount.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                      })}
+                    </span>
+                  </div>
+                  {isSelected && <Check size={16} className="text-emerald-500 shrink-0 ml-1.5" />}
+                </button>
+              )
+            })
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * Custom styled Category Dropdown with Category Icon and Color Badge
+ */
+interface CategorySelectProps {
+  categories: CategoryRecord[]
+  selectedId: string
+  onChange: (id: string) => void
+  placeholder?: string
+}
+
+function CategorySelect({
+  categories,
+  selectedId,
+  onChange,
+  placeholder = 'Select category'
+}: CategorySelectProps): React.JSX.Element {
+  const [isOpen, setIsOpen] = useState<boolean>(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const selectedCategory = useMemo(() => {
+    return categories.find((c) => c.category_id.toString() === selectedId)
+  }, [categories, selectedId])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent): void => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="w-full px-3.5 py-2.5 text-sm bg-[var(--color-background-mute)] border border-[var(--theme-border-soft)] hover:border-emerald-500/40 rounded-xl text-[var(--theme-text-strong)] flex items-center justify-between gap-2.5 transition-all cursor-pointer shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+      >
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          {selectedCategory ? (
+            <>
+              <div
+                className="w-6.5 h-6.5 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs"
+                style={{ backgroundColor: selectedCategory.category_colour }}
+              >
+                <Icon icon={selectedCategory.category_icon} size={15} />
+              </div>
+              <span className="font-semibold truncate text-[var(--theme-text-strong)] text-sm">
+                {selectedCategory.category_name}
+              </span>
+            </>
+          ) : (
+            <span className="text-[var(--theme-text-muted)]">{placeholder}</span>
+          )}
+        </div>
+        <ChevronDown
+          size={16}
+          className={`text-[var(--theme-text-muted)] shrink-0 transition-transform duration-200 ${
+            isOpen ? 'rotate-180 text-emerald-500' : ''
+          }`}
+        />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-50 left-0 right-0 top-full mt-1.5 p-1.5 bg-[var(--color-background-soft)] border border-[var(--theme-border-soft)] rounded-xl shadow-2xl max-h-56 overflow-y-auto custom-scrollbar flex flex-col gap-1">
+          {categories.length === 0 ? (
+            <div className="px-3 py-2 text-xs text-[var(--theme-text-muted)] text-center">
+              No categories available
+            </div>
+          ) : (
+            categories.map((cat) => {
+              const isSelected = cat.category_id.toString() === selectedId
+              return (
+                <button
+                  key={cat.category_id}
+                  type="button"
+                  onClick={() => {
+                    onChange(cat.category_id.toString())
+                    setIsOpen(false)
+                  }}
+                  className={`w-full flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-lg text-left transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-emerald-500/15 text-[var(--theme-text-strong)] font-semibold'
+                      : 'hover:bg-[var(--theme-control-hover)] text-[var(--theme-text-strong)]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div
+                      className="w-6.5 h-6.5 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs"
+                      style={{ backgroundColor: cat.category_colour }}
+                    >
+                      <Icon icon={cat.category_icon} size={15} />
+                    </div>
+                    <span className="text-sm font-medium truncate flex-1">{cat.category_name}</span>
+                  </div>
+                  {isSelected && <Check size={16} className="text-emerald-500 shrink-0 ml-1.5" />}
+                </button>
+              )
+            })
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/**
+ * Returns formatted YYYY-MM-DDTHH:mm string based on current local time.
+ */
+function getLocalDateTimeString(date: Date = new Date()): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
 }
 
 export default function TransactionDrawer({
@@ -47,20 +311,41 @@ export default function TransactionDrawer({
 }: TransactionDrawerProps): React.JSX.Element {
   const [txType, setTxType] = useState<TransactionType>('Expense')
   const [amount, setAmount] = useState<string>('')
-  const [toAccountId, setToAccountId] = useState<string>('')
-  const [fromAccountId, setFromAccountId] = useState<string>('')
-  const [categoryId, setCategoryId] = useState<string>('')
-  const [txDate, setTxDate] = useState<string>(() => new Date().toISOString().slice(0, 16))
+  const [toAccountId, setToAccountId] = useState<string>(() =>
+    accounts.length > 0 ? accounts[0].account_id.toString() : ''
+  )
+  const [fromAccountId, setFromAccountId] = useState<string>(() =>
+    accounts.length > 1
+      ? accounts[1].account_id.toString()
+      : accounts.length > 0
+        ? accounts[0].account_id.toString()
+        : ''
+  )
+  const [categoryId, setCategoryId] = useState<string>(() => {
+    const defaultCat = categories.find((c) => c.category_group_id === 2)
+    return defaultCat ? defaultCat.category_id.toString() : categories[0]?.category_id.toString() || ''
+  })
+  const [txDate, setTxDate] = useState<string>(() => getLocalDateTimeString())
   const [fees, setFees] = useState<string>('0.00')
   const [note, setNote] = useState<string>('')
+  const [formError, setFormError] = useState<string | null>(null)
+  const [amountTouched, setAmountTouched] = useState<boolean>(false)
+  const [noteTouched, setNoteTouched] = useState<boolean>(false)
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false)
+  const [prevIsOpen, setPrevIsOpen] = useState<boolean>(isOpen)
 
-  // Reset or initialize default values when drawer opens
-  useEffect(() => {
+  // Reset form values when drawer opens
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen)
     if (isOpen) {
       setAmount('')
       setFees('0.00')
       setNote('')
-      setTxDate(new Date().toISOString().slice(0, 16))
+      setFormError(null)
+      setAmountTouched(false)
+      setNoteTouched(false)
+      setIsSubmitted(false)
+      setTxDate(getLocalDateTimeString())
 
       if (accounts.length > 0) {
         setToAccountId(accounts[0].account_id.toString())
@@ -78,7 +363,7 @@ export default function TransactionDrawer({
         setCategoryId(categories[0].category_id.toString())
       }
     }
-  }, [isOpen, accounts, categories, txType])
+  }
 
   // Filter categories according to active transaction type
   const availableCategories = useMemo(() => {
@@ -91,9 +376,24 @@ export default function TransactionDrawer({
     return categories
   }, [categories, txType])
 
+  // Validation state for amount
+  const isAmountInvalid = useMemo(() => {
+    if (!amountTouched && !isSubmitted) return false
+    const trimmed = amount.trim()
+    const numeric = parseFloat(trimmed)
+    return trimmed === '' || isNaN(numeric) || numeric <= 0
+  }, [amount, amountTouched, isSubmitted])
+
+  // Validation state for note (required for all transaction types)
+  const isNoteInvalid = useMemo(() => {
+    if (!noteTouched && !isSubmitted) return false
+    return note.trim() === ''
+  }, [note, noteTouched, isSubmitted])
+
   // Automatically select the first valid category when transaction type changes
   const handleTypeChange = (newType: TransactionType): void => {
     setTxType(newType)
+    setFormError(null)
     const firstCat = categories.find((c) =>
       newType === 'Income' ? c.category_group_id === 1 : c.category_group_id === 2
     )
@@ -102,26 +402,61 @@ export default function TransactionDrawer({
     }
   }
 
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    // Only permit non-negative numbers and decimal dots
+    const sanitized = e.target.value.replace(/[-+eE]/g, '')
+    setAmount(sanitized)
+    if (formError) setFormError(null)
+  }
+
+  const handleFeesChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    // Only permit non-negative numbers and decimal dots
+    const sanitized = e.target.value.replace(/[-+eE]/g, '')
+    setFees(sanitized)
+  }
+
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault()
-    const numericAmount = parseFloat(amount)
-    if (isNaN(numericAmount) || numericAmount <= 0) return
+    setIsSubmitted(true)
+    setFormError(null)
+
+    // Amount is mandatory and strictly positive for all 3 transaction types
+    const trimmedAmount = amount.trim()
+    const numericAmount = parseFloat(trimmedAmount)
+    if (!trimmedAmount || isNaN(numericAmount) || numericAmount <= 0) {
+      setFormError('Amount is required and must be a positive number greater than 0.00.')
+      return
+    }
+
+    // Note is mandatory for all transaction types
+    const trimmedNote = note.trim()
+    if (!trimmedNote) {
+      setFormError('Note / Description is required.')
+      return
+    }
+
+    if (txType === 'Transfer' && toAccountId && fromAccountId && toAccountId === fromAccountId) {
+      setFormError('Transfer requires different source and destination accounts.')
+      return
+    }
 
     const numericFees = parseFloat(fees) || 0
     const toAcc = parseInt(toAccountId, 10)
     const fromAcc = txType === 'Transfer' ? parseInt(fromAccountId, 10) : undefined
     const catId = txType !== 'Transfer' ? parseInt(categoryId, 10) : undefined
+    const transactionTypeId = TRANSACTION_TYPE_MAP[txType]
 
     if (onSave) {
       onSave({
+        transactionTypeId,
         transactionType: txType,
         amount: parseFloat(numericAmount.toFixed(2)),
         toAccountId: toAcc,
-        fromAccountId: fromAcc,
-        categoryId: catId,
+        fromAccountId: fromAcc ?? null,
+        categoryId: catId ?? null,
         transactionTime: txDate,
         fees: parseFloat(numericFees.toFixed(2)),
-        note: note.trim() || undefined
+        note: trimmedNote
       })
     }
 
@@ -141,9 +476,8 @@ export default function TransactionDrawer({
 
       {/* Right Side Slide-Over Drawer (Top to Bottom Column) */}
       <aside
-        className={`fixed inset-y-0 right-0 z-50 flex w-full max-w-md sm:max-w-lg flex-col bg-[var(--color-background-soft)] border-l border-[var(--theme-border-soft)] shadow-[-10px_0_30px_rgba(0,0,0,0.35)] transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
-        }`}
+        className={`fixed inset-y-0 right-0 z-50 flex w-full max-w-md sm:max-w-lg flex-col bg-[var(--color-background-soft)] border-l border-[var(--theme-border-soft)] shadow-[-10px_0_30px_rgba(0,0,0,0.35)] transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
+          }`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="transaction-drawer-title"
@@ -180,8 +514,9 @@ export default function TransactionDrawer({
         </div>
 
         {/* Drawer Body (Top to Bottom Scrollable Form Content) */}
-        <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
+        <form noValidate onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5.5 custom-scrollbar">
+
             {/* Transaction Type Selector (Expense / Income / Transfer) */}
             <div className="flex flex-col gap-2">
               <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
@@ -191,11 +526,10 @@ export default function TransactionDrawer({
                 <button
                   type="button"
                   onClick={() => handleTypeChange('Expense')}
-                  className={`flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                    txType === 'Expense'
+                  className={`flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${txType === 'Expense'
                       ? 'bg-red-500 text-white shadow-xs'
                       : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text-strong)]'
-                  }`}
+                    }`}
                 >
                   <TrendingDown size={14} />
                   <span>Expense</span>
@@ -203,11 +537,10 @@ export default function TransactionDrawer({
                 <button
                   type="button"
                   onClick={() => handleTypeChange('Income')}
-                  className={`flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                    txType === 'Income'
+                  className={`flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${txType === 'Income'
                       ? 'bg-emerald-600 text-white shadow-xs'
                       : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text-strong)]'
-                  }`}
+                    }`}
                 >
                   <TrendingUp size={14} />
                   <span>Income</span>
@@ -215,11 +548,10 @@ export default function TransactionDrawer({
                 <button
                   type="button"
                   onClick={() => handleTypeChange('Transfer')}
-                  className={`flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                    txType === 'Transfer'
+                  className={`flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${txType === 'Transfer'
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text-strong)]'
-                  }`}
+                    }`}
                 >
                   <ArrowRightLeft size={14} />
                   <span>Transfer</span>
@@ -228,12 +560,23 @@ export default function TransactionDrawer({
             </div>
 
             {/* Amount Input */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
-                Amount
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)] flex items-center gap-1">
+                <span>Amount</span>
+                <span className="text-red-500 font-bold">*</span>
               </label>
-              <div className="flex items-stretch rounded-xl border border-[var(--theme-border-soft)] bg-[var(--theme-control-bg)] overflow-hidden focus-within:border-emerald-500/50 transition-colors">
-                <span className="px-3.5 py-2.5 bg-[var(--theme-surface-strong)] text-sm font-semibold border-r border-[var(--theme-border-soft)] text-[var(--theme-text-muted)] min-w-[54px] flex items-center justify-center font-mono">
+              <div
+                className={`flex items-stretch rounded-xl border overflow-hidden transition-all ${isAmountInvalid
+                    ? 'border-red-500 ring-1 ring-red-500/50 bg-red-500/5 focus-within:border-red-500'
+                    : 'border-[var(--theme-border-soft)] bg-[var(--theme-control-bg)] focus-within:border-emerald-500/50'
+                  }`}
+              >
+                <span
+                  className={`px-3.5 py-2.5 text-sm font-semibold border-r text-[var(--theme-text-muted)] min-w-[54px] flex items-center justify-center font-mono select-none ${isAmountInvalid
+                      ? 'bg-red-500/10 border-red-500/40 text-red-400'
+                      : 'bg-[var(--theme-surface-strong)] border-[var(--theme-border-soft)]'
+                    }`}
+                >
                   {currencySymbol || currencyType}
                 </span>
                 <input
@@ -242,12 +585,51 @@ export default function TransactionDrawer({
                   min="0.01"
                   placeholder="0.00"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={handleAmountChange}
+                  onBlur={() => setAmountTouched(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+                      e.preventDefault()
+                    }
+                  }}
                   required
-                  className="flex-1 px-3.5 py-2.5 text-sm bg-transparent border-0 text-[var(--theme-text-strong)] focus:outline-none font-mono no-spinners"
+                  className="flex-1 px-3.5 py-2.5 text-sm bg-transparent border-0 text-[var(--theme-text-strong)] focus:outline-none font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               </div>
+              {isAmountInvalid && (
+                <span className="text-[11px] text-red-400 font-medium pl-1">
+                  Amount is required and must be greater than 0.
+                </span>
+              )}
             </div>
+
+            {/* Transfer Fees Input (Row 2 for Transfer) */}
+            {txType === 'Transfer' && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
+                  Fees (Optional)
+                </label>
+                <div className="flex items-stretch rounded-xl border border-[var(--theme-border-soft)] bg-[var(--theme-control-bg)] overflow-hidden focus-within:border-emerald-500/50 transition-colors">
+                  <span className="px-3.5 py-2.5 bg-[var(--theme-surface-strong)] text-sm font-semibold border-r border-[var(--theme-border-soft)] text-[var(--theme-text-muted)] min-w-[54px] flex items-center justify-center font-mono select-none">
+                    {currencySymbol || currencyType}
+                  </span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    value={fees}
+                    onChange={handleFeesChange}
+                    onKeyDown={(e) => {
+                      if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
+                        e.preventDefault()
+                      }
+                    }}
+                    className="flex-1 px-3.5 py-2.5 text-sm bg-transparent border-0 text-[var(--theme-text-strong)] focus:outline-none font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Account Selectors */}
             {txType === 'Transfer' ? (
@@ -257,17 +639,14 @@ export default function TransactionDrawer({
                     <Wallet size={13} className="text-blue-500" />
                     <span>From Account</span>
                   </label>
-                  <select
-                    value={fromAccountId}
-                    onChange={(e) => setFromAccountId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-sm bg-[var(--color-background-mute)] border border-[var(--theme-border-soft)] rounded-xl text-[var(--theme-text-strong)] focus:outline-none focus:border-emerald-500/50 cursor-pointer transition-colors"
-                  >
-                    {accounts.map((acc) => (
-                      <option key={acc.account_id} value={acc.account_id.toString()}>
-                        {acc.account_name}
-                      </option>
-                    ))}
-                  </select>
+                  <AccountSelect
+                    accounts={accounts}
+                    selectedId={fromAccountId}
+                    onChange={setFromAccountId}
+                    currencySymbol={currencySymbol}
+                    currencyType={currencyType}
+                    placeholder="Select source account"
+                  />
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -275,17 +654,14 @@ export default function TransactionDrawer({
                     <Wallet size={13} className="text-emerald-500" />
                     <span>To Account</span>
                   </label>
-                  <select
-                    value={toAccountId}
-                    onChange={(e) => setToAccountId(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-sm bg-[var(--color-background-mute)] border border-[var(--theme-border-soft)] rounded-xl text-[var(--theme-text-strong)] focus:outline-none focus:border-emerald-500/50 cursor-pointer transition-colors"
-                  >
-                    {accounts.map((acc) => (
-                      <option key={acc.account_id} value={acc.account_id.toString()}>
-                        {acc.account_name}
-                      </option>
-                    ))}
-                  </select>
+                  <AccountSelect
+                    accounts={accounts}
+                    selectedId={toAccountId}
+                    onChange={setToAccountId}
+                    currencySymbol={currencySymbol}
+                    currencyType={currencyType}
+                    placeholder="Select target account"
+                  />
                 </div>
               </div>
             ) : (
@@ -294,17 +670,14 @@ export default function TransactionDrawer({
                   <Wallet size={13} className="text-emerald-500" />
                   <span>Account</span>
                 </label>
-                <select
-                  value={toAccountId}
-                  onChange={(e) => setToAccountId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm bg-[var(--color-background-mute)] border border-[var(--theme-border-soft)] rounded-xl text-[var(--theme-text-strong)] focus:outline-none focus:border-emerald-500/50 cursor-pointer transition-colors"
-                >
-                  {accounts.map((acc) => (
-                    <option key={acc.account_id} value={acc.account_id.toString()}>
-                      {acc.account_name}
-                    </option>
-                  ))}
-                </select>
+                <AccountSelect
+                  accounts={accounts}
+                  selectedId={toAccountId}
+                  onChange={setToAccountId}
+                  currencySymbol={currencySymbol}
+                  currencyType={currencyType}
+                  placeholder="Select account"
+                />
               </div>
             )}
 
@@ -315,17 +688,12 @@ export default function TransactionDrawer({
                   <Layers size={13} className="text-purple-500" />
                   <span>Category</span>
                 </label>
-                <select
-                  value={categoryId}
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm bg-[var(--color-background-mute)] border border-[var(--theme-border-soft)] rounded-xl text-[var(--theme-text-strong)] focus:outline-none focus:border-emerald-500/50 cursor-pointer transition-colors"
-                >
-                  {availableCategories.map((cat) => (
-                    <option key={cat.category_id} value={cat.category_id.toString()}>
-                      {cat.category_name}
-                    </option>
-                  ))}
-                </select>
+                <CategorySelect
+                  categories={availableCategories}
+                  selectedId={categoryId}
+                  onChange={setCategoryId}
+                  placeholder="Select category"
+                />
               </div>
             )}
 
@@ -344,38 +712,34 @@ export default function TransactionDrawer({
               />
             </div>
 
-            {/* Transfer Fees (Optional) */}
-            {txType === 'Transfer' && (
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
-                  Transfer Fees (Optional)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  value={fees}
-                  onChange={(e) => setFees(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm bg-[var(--theme-control-bg)] border border-[var(--theme-border-soft)] rounded-xl text-[var(--theme-text-strong)] focus:outline-none focus:border-emerald-500/50 transition-colors font-mono"
-                />
-              </div>
-            )}
-
             {/* Note / Description */}
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)] flex items-center gap-1.5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)] flex items-center gap-1">
                 <FileText size={13} className="text-amber-500" />
                 <span>Note / Description</span>
+                <span className="text-red-500 font-bold">*</span>
               </label>
               <textarea
                 rows={3}
-                placeholder="Optional details, reference number, or note..."
+                placeholder="Enter transaction note or description..."
                 value={note}
-                onChange={(e) => setNote(e.target.value)}
+                onChange={(e) => {
+                  setNote(e.target.value)
+                  if (formError) setFormError(null)
+                }}
+                onBlur={() => setNoteTouched(true)}
                 maxLength={200}
-                className="w-full px-3.5 py-2.5 text-sm bg-[var(--theme-control-bg)] border border-[var(--theme-border-soft)] rounded-xl text-[var(--theme-text-strong)] focus:outline-none focus:border-emerald-500/50 transition-colors resize-none"
+                required
+                className={`w-full px-3.5 py-2.5 text-sm rounded-xl text-[var(--theme-text-strong)] focus:outline-none transition-all resize-none ${isNoteInvalid
+                    ? 'border border-red-500 ring-1 ring-red-500/50 bg-red-500/5 focus:border-red-500'
+                    : 'bg-[var(--theme-control-bg)] border border-[var(--theme-border-soft)] focus:border-emerald-500/50'
+                  }`}
               />
+              {isNoteInvalid && (
+                <span className="text-[11px] text-red-400 font-medium pl-1">
+                  Note is required.
+                </span>
+              )}
             </div>
           </div>
 
@@ -401,3 +765,4 @@ export default function TransactionDrawer({
     </>
   )
 }
+

@@ -93,6 +93,46 @@ const api = {
       accountIcon,
       accountColor
     ),
+  listTransactionTypes: (): Promise<
+    Array<{
+      transaction_type_id: number
+      transaction_type_name: string
+    }>
+  > => electronAPI.ipcRenderer.invoke('db:listTransactionTypes'),
+  listTransactions: (): Promise<
+    Array<{
+      time_stamp: string
+      transaction_time: string
+      transaction_type_id: number
+      to_account_id: number
+      from_account_id?: number | null
+      category_id?: number | null
+      amount: number
+      fees?: number | null
+      note: string
+    }>
+  > => electronAPI.ipcRenderer.invoke('db:listTransactions'),
+  addTransaction: (
+    transactionTime: string,
+    transactionTypeId: number,
+    toAccountId: number,
+    fromAccountId: number | null | undefined,
+    categoryId: number | null | undefined,
+    amount: number,
+    fees: number = 0,
+    note: string
+  ): Promise<string> =>
+    electronAPI.ipcRenderer.invoke(
+      'db:addTransaction',
+      transactionTime,
+      transactionTypeId,
+      toAccountId,
+      fromAccountId,
+      categoryId,
+      amount,
+      fees,
+      note
+    ),
   getVersion: (): Promise<string> => electronAPI.ipcRenderer.invoke('app:getVersion'),
   updater: {
     onUpdateAvailable: (

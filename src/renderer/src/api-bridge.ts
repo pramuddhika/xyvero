@@ -108,6 +108,47 @@ if (typeof window !== 'undefined' && !window.api) {
       }
       return result.categoryId
     },
+    listTransactionTypes: async () => {
+      const res = await fetch('/api/listTransactionTypes')
+      return parseJson(res)
+    },
+    listTransactions: async () => {
+      const res = await fetch('/api/listTransactions')
+      return parseJson(res)
+    },
+    addTransaction: async (
+      transactionTime: string,
+      transactionTypeId: number,
+      toAccountId: number,
+      fromAccountId: number | null | undefined,
+      categoryId: number | null | undefined,
+      amount: number,
+      fees: number = 0,
+      note: string
+    ): Promise<string> => {
+      const res = await fetch('/api/addTransaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transactionTime,
+          transactionTypeId,
+          toAccountId,
+          fromAccountId,
+          categoryId,
+          amount,
+          fees,
+          note
+        })
+      })
+      const result = await parseJson<{ timeStamp?: string; error?: string }>(res)
+      if (result.error) {
+        throw new Error(result.error)
+      }
+      if (!result.timeStamp) {
+        throw new Error('Failed to save transaction: invalid server response')
+      }
+      return result.timeStamp
+    },
     getVersion: async () => '0.0.1',
     updater: {
       onUpdateAvailable: () => () => {},
