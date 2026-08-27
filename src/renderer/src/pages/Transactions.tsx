@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 /* eslint-disable prettier/prettier */
 import React, { useMemo, useState, useEffect } from 'react'
+import { Plus } from 'lucide-react'
+import { getCurrencySymbol } from '../utils/currency'
+import TransactionDrawer, { TransactionFormData } from '../components/TransactionDrawer'
+import type { AccountRecord, CategoryRecord } from '../types'
 
 type CalendarEvent = {
   title: string
@@ -157,6 +161,14 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
   const [monthStartDate, setMonthStartDate] = useState<number>(1)
   const isLightTheme = theme === 'light'
 
+  // Right-side slide-over drawer state
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false)
+  const [accounts, setAccounts] = useState<AccountRecord[]>([])
+  const [categories, setCategories] = useState<CategoryRecord[]>([])
+  const [currencyType, setCurrencyType] = useState<string>('USD')
+
+  const currencySymbol = useMemo(() => getCurrencySymbol(currencyType), [currencyType])
+
   useEffect(() => {
     if (window.api?.getConfigurationValue) {
       window.api.getConfigurationValue('MONTH_START_DATE').then((val) => {
@@ -167,6 +179,29 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
           }
         }
       })
+    }
+  }, [])
+
+  // Load active accounts and categories for transaction form
+  useEffect(() => {
+    if (window.api) {
+      Promise.all([
+        window.api.listAccounts ? window.api.listAccounts() : [],
+        window.api.listCategories ? window.api.listCategories() : [],
+        window.api.getConfigurationValue
+          ? window.api.getConfigurationValue('CURRENCY_TYPE')
+          : undefined
+      ])
+        .then(([accs, cats, configVal]) => {
+          setAccounts(accs || [])
+          setCategories(cats || [])
+          if (configVal?.configuration_value) {
+            setCurrencyType(configVal.configuration_value)
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to load accounts and categories:', err)
+        })
     }
   }, [])
 
@@ -195,7 +230,6 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
 
   const displayedWeekdayLabels = useMemo(() => {
     if (computedWeekStartIndex === 0) return weekdayLabels
-    // rotate so Monday is first
     const rotated = weekdayLabels.slice(1).concat(weekdayLabels[0])
     return rotated
   }, [computedWeekStartIndex])
@@ -213,8 +247,15 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
     setVisibleMonth((currentMonth) => addMonths(currentMonth, direction))
   }
 
+  // Keyboard navigation & ESC key handler for drawer
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      if (isDrawerOpen) {
+        if (e.key === 'Escape') {
+          setIsDrawerOpen(false)
+        }
+        return
+      }
       if (e.key === 'ArrowLeft') {
         setVisibleMonth((currentMonth) => addMonths(currentMonth, -1))
       } else if (e.key === 'ArrowRight') {
@@ -224,27 +265,32 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
 
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [])
+  }, [isDrawerOpen])
+
+  const handleSaveTransaction = (data: TransactionFormData): void => {
+    console.log('New transaction data submitted:', data)
+    setIsDrawerOpen(false)
+  }
 
   const shellClassName = isLightTheme
-    ? 'flex min-h-0 flex-1 flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(54,177,118,0.16),_transparent_30%),linear-gradient(180deg,_#ffffff,_#f1f6f8)] shadow-[0_24px_60px_rgba(15,36,48,0.12)]'
-    : 'flex min-h-0 flex-1 flex-col overflow-hidden rounded-[28px] border border-[var(--theme-border)] bg-[radial-gradient(circle_at_top_left,_rgba(54,177,118,0.14),_transparent_28%),linear-gradient(180deg,_rgba(12,31,40,0.98),_rgba(8,19,26,0.98))] shadow-[0_28px_70px_rgba(0,0,0,0.28)]'
+    ? 'flex min-h-0 flex-1 flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top_left,_rgba(54,177,118,0.16),_transparent_30%),linear-gradient(180deg,_#ffffff,_#f1f6f8)] shadow-[0_24px_60px_rgba(15,36,48,0.12)] relative'
+    : 'flex min-h-0 flex-1 flex-col overflow-hidden rounded-[28px] border border-[var(--theme-border)] bg-[radial-gradient(circle_at_top_left,_rgba(54,177,118,0.14),_transparent_28%),linear-gradient(180deg,_rgba(12,31,40,0.98),_rgba(8,19,26,0.98))] shadow-[0_28px_70px_rgba(0,0,0,0.28)] relative'
 
   const topBarClassName = isLightTheme
     ? 'flex flex-wrap items-center justify-between gap-4 border-b border-slate-200/80 px-5 py-4 sm:px-6'
     : 'flex flex-wrap items-center justify-between gap-4 border-b border-white/10 px-5 py-4 sm:px-6'
 
   const monthActionButtonClassName = isLightTheme
-    ? 'inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60'
-    : 'inline-flex min-h-11 items-center gap-2 rounded-full border border-white/12 bg-[rgba(255,255,255,0.04)] px-4 py-2 text-sm font-semibold text-(--theme-text-strong) shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition hover:border-white/20 hover:bg-white/8 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60'
+    ? 'inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 cursor-pointer'
+    : 'inline-flex min-h-11 items-center gap-2 rounded-full border border-white/12 bg-[rgba(255,255,255,0.04)] px-4 py-2 text-sm font-semibold text-(--theme-text-strong) shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition hover:border-white/20 hover:bg-white/8 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60 cursor-pointer'
 
   const monthStepperClassName = isLightTheme
     ? 'inline-flex overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm'
     : 'inline-flex overflow-hidden rounded-full border border-white/12 bg-[rgba(255,255,255,0.04)] shadow-[0_10px_24px_rgba(0,0,0,0.18)]'
 
   const monthStepperButtonClassName = isLightTheme
-    ? 'inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60'
-    : 'inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold text-(--theme-text-strong) transition hover:bg-white/8 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60'
+    ? 'inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50 hover:text-slate-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60 cursor-pointer'
+    : 'inline-flex min-h-11 items-center gap-2 px-4 py-2 text-sm font-semibold text-(--theme-text-strong) transition hover:bg-white/8 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60 cursor-pointer'
 
   const panelClassName = isLightTheme
     ? 'mt-px grid min-h-0 flex-1 grid-cols-7 grid-rows-6 gap-px overflow-hidden rounded-b-3xl border border-t-0 border-slate-200 bg-slate-200/80'
@@ -252,6 +298,7 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
 
   return (
     <div className={shellClassName}>
+      {/* Top Toolbar */}
       <div className={topBarClassName}>
         <div className="min-w-0">
           <h2
@@ -261,7 +308,8 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
           </h2>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+          {/* Today Button */}
           <button
             type="button"
             onClick={() => setVisibleMonth(new Date())}
@@ -283,6 +331,7 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
             <span>Today</span>
           </button>
 
+          {/* Stepper Navigation */}
           <div className={monthStepperClassName} aria-label="Month navigation">
             <button
               type="button"
@@ -333,9 +382,22 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
               </svg>
             </button>
           </div>
+
+          {/* Easy-Access Top Bar + Marker Button */}
+          <button
+            type="button"
+            onClick={() => setIsDrawerOpen(true)}
+            className="category-add-button flex items-center justify-center gap-2 shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer min-h-11 px-4.5 rounded-full"
+            title="Create New Transaction"
+            aria-label="Create New Transaction"
+          >
+            <Plus size={18} />
+            <span className="font-semibold text-sm">Add Transaction</span>
+          </button>
         </div>
       </div>
 
+      {/* Calendar View */}
       <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-5">
         <div
           className={`grid grid-cols-7 gap-px rounded-t-2xl border text-center text-[11px] font-semibold uppercase tracking-[0.22em] ${
@@ -438,6 +500,28 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
           ))}
         </div>
       </div>
+
+      {/* Floating Action Button (FAB) + Marker for Easy Access */}
+      <button
+        type="button"
+        onClick={() => setIsDrawerOpen(true)}
+        className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-[0_10px_25px_rgba(16,185,129,0.4)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+        title="Add Transaction"
+        aria-label="Add Transaction"
+      >
+        <Plus size={26} strokeWidth={2.5} />
+      </button>
+
+      {/* Separated Right-Side Slide-Over Transaction Drawer with Backdrop Blur */}
+      <TransactionDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        accounts={accounts}
+        categories={categories}
+        currencySymbol={currencySymbol}
+        currencyType={currencyType}
+        onSave={handleSaveTransaction}
+      />
     </div>
   )
 }

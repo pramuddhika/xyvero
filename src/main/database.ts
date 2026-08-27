@@ -103,6 +103,23 @@ function createTables(database: Database.Database): void {
       is_active INTEGER NOT NULL DEFAULT 1
     );
     CREATE UNIQUE INDEX IF NOT EXISTS idx_accounts_active_name ON accounts (account_name) WHERE is_active = 1;
+
+    CREATE TABLE IF NOT EXISTS transactionTypes (
+      transaction_type_id INTEGER PRIMARY KEY,
+      transaction_type_name VARCHAR(100) NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS transactions (
+      time_stamp DATETIME PRIMARY KEY,
+      transaction_time DATETIME NOT NULL,
+      transaction_type_id INTEGER NOT NULL REFERENCES transactionTypes(transaction_type_id),
+      to_account_id INTEGER NOT NULL REFERENCES accounts(account_id),
+      from_account_id INTEGER NOT NULL REFERENCES accounts(account_id),
+      category_id INTEGER NOT NULL REFERENCES category(category_id),
+      amount REAL NOT NULL,
+      fees REAL,
+      note VARCHAR(200)
+    );
   `)
 
   database.exec(`
@@ -126,8 +143,8 @@ function createTables(database: Database.Database): void {
 
     INSERT OR IGNORE INTO categoryTypes (category_id, category_type, category_name)
     VALUES
-      (1, 'IN', 'In'),
-      (2, 'OUT', 'Out');
+      (1, 'IN', 'Income'),
+      (2, 'OUT', 'Expense');
 
     INSERT OR IGNORE INTO category (
       category_id,
@@ -161,6 +178,12 @@ function createTables(database: Database.Database): void {
       (1, 'Wallet', 0.00, 1, '#12B886', 'wallet', 1),
       (2, 'Bank Account', 0.00, 2, '#339AF0', 'bank', 1),
       (3, 'Piggy Bank', 0.00, 3, '#F783AC', 'savings', 1);
+
+    INSERT OR IGNORE INTO transactionTypes (transaction_type_id, transaction_type_name)
+    VALUES
+      (1, 'Income'),
+      (2, 'Expense'),
+      (3, 'Transfer');
   `)
 }
 
@@ -292,6 +315,9 @@ export function addCategory(
   if (!trimmedName) {
     throw new Error('Category name cannot be empty.')
   }
+  if (trimmedName.length > 50) {
+    throw new Error('Category name cannot exceed 50 characters.')
+  }
 
   const existing = database
     .prepare(
@@ -359,6 +385,9 @@ export function addAccount(
   const trimmedName = accountName.trim()
   if (!trimmedName) {
     throw new Error('Account name cannot be empty.')
+  }
+  if (trimmedName.length > 50) {
+    throw new Error('Account name cannot exceed 50 characters.')
   }
 
   const existing = database

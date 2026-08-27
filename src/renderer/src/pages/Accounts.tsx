@@ -338,11 +338,10 @@ function Accounts(): React.JSX.Element {
                       Subtotal:
                     </span>
                     <span
-                      className={`font-semibold ${
-                        isGroupNegative
+                      className={`font-semibold ${isGroupNegative
                           ? 'text-red-500'
                           : 'text-[var(--theme-text-strong)]'
-                      }`}
+                        }`}
                     >
                       {isGroupNegative ? '-' : ''}
                       {currencySymbol || currencyType} {formatAmount(Math.abs(typeTotal))}
@@ -380,11 +379,10 @@ function Accounts(): React.JSX.Element {
                               )}
                             </div>
                             <span
-                              className={`text-xs font-mono font-semibold block mt-0.5 truncate ${
-                                isNegative
+                              className={`text-xs font-mono font-semibold block mt-0.5 truncate ${isNegative
                                   ? 'text-red-500'
                                   : 'text-[var(--theme-text-strong)]'
-                              }`}
+                                }`}
                             >
                               {currencySymbol || currencyType}{' '}
                               {formatAmount(Math.abs(acc.account_amount))}
