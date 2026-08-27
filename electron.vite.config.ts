@@ -13,7 +13,10 @@ import {
   listCategories,
   addCategory,
   listAccounts,
-  addAccount
+  addAccount,
+  listTransactionTypes,
+  listTransactions,
+  addTransaction
 } from './src/main/database'
 
 function devDatabasePlugin(): Plugin {
@@ -144,7 +147,7 @@ function devDatabasePlugin(): Plugin {
             } catch (err) {
               res.statusCode = 500
               res.setHeader('Content-Type', 'application/json')
-              res.end(JSON.stringify({ error: String(err) }))
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }))
             }
           })
           return
@@ -158,7 +161,7 @@ function devDatabasePlugin(): Plugin {
           } catch (err) {
             res.statusCode = 500
             res.setHeader('Content-Type', 'application/json')
-            res.end(JSON.stringify({ error: String(err) }))
+            res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }))
           }
           return
         }
@@ -183,7 +186,62 @@ function devDatabasePlugin(): Plugin {
             } catch (err) {
               res.statusCode = 500
               res.setHeader('Content-Type', 'application/json')
-              res.end(JSON.stringify({ error: String(err) }))
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }))
+            }
+          })
+          return
+        }
+
+        if (pathname === '/api/listTransactionTypes') {
+          try {
+            const data = listTransactionTypes()
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify(data))
+          } catch (err) {
+            res.statusCode = 500
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }))
+          }
+          return
+        }
+
+        if (pathname === '/api/listTransactions') {
+          try {
+            const data = listTransactions()
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify(data))
+          } catch (err) {
+            res.statusCode = 500
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }))
+          }
+          return
+        }
+
+        if (pathname === '/api/addTransaction' && req.method === 'POST') {
+          let body = ''
+          req.on('data', (chunk) => {
+            body += chunk
+          })
+          req.on('end', () => {
+            try {
+              const parsed = JSON.parse(body)
+              const timeStamp = addTransaction(
+                parsed.transactionTime,
+                parsed.transactionTypeId,
+                parsed.toAccountId,
+                parsed.fromAccountId,
+                parsed.categoryId,
+                parsed.amount,
+                parsed.fees,
+                parsed.note
+              )
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ timeStamp }))
+            } catch (err) {
+              res.statusCode = 500
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }))
             }
           })
           return

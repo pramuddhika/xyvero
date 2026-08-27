@@ -93,14 +93,6 @@ function Categories(): React.JSX.Element {
     return filteredCategories.filter((c) => c.category_group_id === 2)
   }, [filteredCategories])
 
-  const incomeTotal = useMemo(() => {
-    return incomeCategories.reduce((sum, c) => sum + c.category_amount, 0)
-  }, [incomeCategories])
-
-  const expenseTotal = useMemo(() => {
-    return expenseCategories.reduce((sum, c) => sum + c.category_amount, 0)
-  }, [expenseCategories])
-
   const handleOpenModal = (): void => {
     setSaveError(null)
     reset({
@@ -250,20 +242,6 @@ function Categories(): React.JSX.Element {
                     {incomeCategories.length}
                   </span>
                 </div>
-
-                {/* Subtotal Header in right corner */}
-                <div className="flex items-center gap-2 font-mono text-xs">
-                  <span className="text-[11px] text-[var(--theme-text-muted)] font-sans hidden sm:inline">
-                    Subtotal:
-                  </span>
-                  <span className="font-semibold text-blue-500">
-                    {currencySymbol || currencyType}{' '}
-                    {incomeTotal.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })}
-                  </span>
-                </div>
               </summary>
               <div className="category-accordion-body">
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 py-1">
@@ -280,20 +258,6 @@ function Categories(): React.JSX.Element {
                   <span>Expense Categories</span>
                   <span className="text-[11px] px-2 py-0.5 rounded-full bg-[var(--theme-chip-bg)] text-[var(--theme-text-muted)] font-semibold">
                     {expenseCategories.length}
-                  </span>
-                </div>
-
-                {/* Subtotal Header in right corner */}
-                <div className="flex items-center gap-2 font-mono text-xs">
-                  <span className="text-[11px] text-[var(--theme-text-muted)] font-sans hidden sm:inline">
-                    Subtotal:
-                  </span>
-                  <span className="font-semibold text-[var(--theme-text-strong)]">
-                    {currencySymbol || currencyType}{' '}
-                    {expenseTotal.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2
-                    })}
                   </span>
                 </div>
               </summary>

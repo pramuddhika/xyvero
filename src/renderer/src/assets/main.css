@@ -8,6 +8,19 @@ body {
   user-select: none;
 }
 
+/* Hide spin buttons for number inputs */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+
 code {
   font-weight: 600;
   padding: 3px 5px;

@@ -15,7 +15,10 @@ import {
   listCategories,
   addCategory,
   listAccounts,
-  addAccount
+  addAccount,
+  listTransactionTypes,
+  listTransactions,
+  addTransaction
 } from './database'
 
 const icon = nativeImage.createFromPath(iconPath)
@@ -145,6 +148,33 @@ app.whenReady().then(() => {
       accountColor: string
     ) => {
       return addAccount(accountName, accountAmount, accountTypeId, accountIcon, accountColor)
+    }
+  )
+  ipcMain.handle('db:listTransactionTypes', () => listTransactionTypes())
+  ipcMain.handle('db:listTransactions', () => listTransactions())
+  ipcMain.handle(
+    'db:addTransaction',
+    (
+      _,
+      transactionTime: string,
+      transactionTypeId: number,
+      toAccountId: number,
+      fromAccountId: number | null | undefined,
+      categoryId: number | null | undefined,
+      amount: number,
+      fees: number | undefined,
+      note: string
+    ) => {
+      return addTransaction(
+        transactionTime,
+        transactionTypeId,
+        toAccountId,
+        fromAccountId,
+        categoryId,
+        amount,
+        fees,
+        note
+      )
     }
   )
   ipcMain.handle('app:getVersion', () => app.getVersion())
