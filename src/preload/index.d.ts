@@ -26,6 +26,7 @@ type CategoryRecord = {
   category_group_id: number
   category_icon: string
   category_colour: string
+  is_active: number
 }
 
 type AccountRecord = {
@@ -35,6 +36,12 @@ type AccountRecord = {
   account_type_id: number
   account_color: string
   account_icon: string
+  is_active: number
+}
+
+type UpdateInfo = {
+  version?: string
+  [key: string]: unknown
 }
 
 interface AppApi {
@@ -62,9 +69,9 @@ interface AppApi {
   ) => Promise<number>
   getVersion: () => Promise<string>
   updater: {
-    onUpdateAvailable: (callback: (info: any) => void) => () => void
+    onUpdateAvailable: (callback: (info: UpdateInfo) => void) => () => void
     onUpdateProgress: (callback: (percent: number) => void) => () => void
-    onUpdateDownloaded: (callback: (info: any) => void) => () => void
+    onUpdateDownloaded: (callback: (info: UpdateInfo) => void) => () => void
     onUpdateError: (callback: (error: string) => void) => () => void
     startDownload: () => void
     quitAndInstall: () => void

@@ -72,7 +72,7 @@ function getPeriodStart(referenceDate: Date, startDay: number): Date {
   const month = referenceDate.getMonth()
   const date = referenceDate.getDate()
 
-  let startYear = year
+  const startYear = year
   let startMonth = month
 
   if (date < startDay) {

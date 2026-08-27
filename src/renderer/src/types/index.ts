@@ -28,6 +28,7 @@ export type AccountRecord = {
   account_type_id: number
   account_color: string
   account_icon: string
+  is_active: number
 }
 
 // ─── Category Types ───────────────────────────────────────────────────────────
@@ -45,4 +46,5 @@ export type CategoryRecord = {
   category_group_id: number
   category_icon: string
   category_colour: string
+  is_active: number
 }

@@ -144,7 +144,7 @@ function devDatabasePlugin(): Plugin {
             } catch (err) {
               res.statusCode = 500
               res.setHeader('Content-Type', 'application/json')
-              res.end(JSON.stringify({ error: String(err) }))
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }))
             }
           })
           return
@@ -158,7 +158,7 @@ function devDatabasePlugin(): Plugin {
           } catch (err) {
             res.statusCode = 500
             res.setHeader('Content-Type', 'application/json')
-            res.end(JSON.stringify({ error: String(err) }))
+            res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }))
           }
           return
         }
@@ -183,7 +183,7 @@ function devDatabasePlugin(): Plugin {
             } catch (err) {
               res.statusCode = 500
               res.setHeader('Content-Type', 'application/json')
-              res.end(JSON.stringify({ error: String(err) }))
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }))
             }
           })
           return
