@@ -74,6 +74,13 @@ interface AppApi {
     accountIcon: string,
     accountColor: string
   ) => Promise<number>
+  updateAccount: (
+    accountId: number,
+    accountName: string,
+    accountTypeId: number,
+    accountIcon: string,
+    accountColor: string
+  ) => Promise<void>
   listCategoryTypes: () => Promise<CategoryTypeRecord[]>
   listCategories: () => Promise<CategoryRecord[]>
   addCategory: (

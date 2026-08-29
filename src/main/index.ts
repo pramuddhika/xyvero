@@ -16,6 +16,7 @@ import {
   addCategory,
   listAccounts,
   addAccount,
+  updateAccount,
   listTransactionTypes,
   listTransactions,
   addTransaction
@@ -146,6 +147,19 @@ app.whenReady().then(() => {
       accountColor: string
     ) => {
       return addAccount(accountName, accountTypeId, accountIcon, accountColor)
+    }
+  )
+  ipcMain.handle(
+    'db:updateAccount',
+    (
+      _,
+      accountId: number,
+      accountName: string,
+      accountTypeId: number,
+      accountIcon: string,
+      accountColor: string
+    ) => {
+      updateAccount(accountId, accountName, accountTypeId, accountIcon, accountColor)
     }
   )
   ipcMain.handle('db:listTransactionTypes', () => listTransactionTypes())

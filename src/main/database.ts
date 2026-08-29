@@ -598,6 +598,52 @@ export function addAccount(
   return result.lastInsertRowid as number
 }
 
+export function updateAccount(
+  accountId: number,
+  accountName: string,
+  accountTypeId: number,
+  accountIcon: string,
+  accountColor: string
+): void {
+  const database = getDatabase()
+  const trimmedName = accountName.trim()
+  if (!trimmedName) {
+    throw new Error('Account name cannot be empty.')
+  }
+  if (trimmedName.length > 50) {
+    throw new Error('Account name cannot exceed 50 characters.')
+  }
+
+  const existing = database
+    .prepare(
+      `
+        SELECT account_id
+        FROM accounts
+        WHERE LOWER(account_name) = LOWER(?) AND is_active = 1 AND account_id != ?
+        LIMIT 1
+      `
+    )
+    .get(trimmedName, accountId)
+
+  if (existing) {
+    throw new Error(`An active account named "${trimmedName}" already exists.`)
+  }
+
+  database
+    .prepare(
+      `
+        UPDATE accounts
+        SET
+          account_name = ?,
+          account_type_id = ?,
+          account_icon = ?,
+          account_color = ?
+        WHERE account_id = ?
+      `
+    )
+    .run(trimmedName, accountTypeId, accountIcon, accountColor, accountId)
+}
+
 export type TransactionTypeRecord = {
   transaction_type_id: number
   transaction_type_name: string

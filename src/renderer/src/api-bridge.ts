@@ -71,6 +71,29 @@ if (typeof window !== 'undefined' && !window.api) {
       }
       return result.accountId
     },
+    updateAccount: async (
+      accountId: number,
+      accountName: string,
+      accountTypeId: number,
+      accountIcon: string,
+      accountColor: string
+    ): Promise<void> => {
+      const res = await fetch('/api/updateAccount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountId,
+          accountName,
+          accountTypeId,
+          accountIcon,
+          accountColor
+        })
+      })
+      const result = await parseJson<{ success?: boolean; error?: string }>(res)
+      if (result.error) {
+        throw new Error(result.error)
+      }
+    },
     listCategoryTypes: async () => {
       const res = await fetch('/api/listCategoryTypes')
       return parseJson(res)

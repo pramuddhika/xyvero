@@ -1,50 +1,23 @@
 /* eslint-disable prettier/prettier */
 import React, { useCallback, useEffect, useState, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
 import { Plus, Search, TrendingUp, TrendingDown, Wallet, X } from 'lucide-react'
 import { Icon } from '../components/Icon'
-import { COLOR_PALETTE } from '../components/Color'
-import IconPicker from '../components/IconPicker'
-import ColorPicker from '../components/ColorPicker'
-import FormModal from '../components/FormModal'
 import { getCurrencySymbol } from '../utils/currency'
-import type { AccountTypeRecord, AccountRecord } from '../types'
-
-interface AccountFormValues {
-  accountName: string
-  accountTypeId: string
-  accountIcon: string
-  accountColor: string
-}
+import AccountDetail from '../components/AccountDetail'
+import AccountFormModal, { AccountFormValues } from '../components/AccountFormModal'
+import type { AccountTypeRecord, AccountRecord, CategoryRecord } from '../types'
 
 function Accounts(): React.JSX.Element {
   const [accounts, setAccounts] = useState<AccountRecord[]>([])
   const [accountTypes, setAccountTypes] = useState<AccountTypeRecord[]>([])
+  const [categories, setCategories] = useState<CategoryRecord[]>([])
   const [currencyType, setCurrencyType] = useState<string>('USD')
+  const [monthStartDay, setMonthStartDay] = useState<number>(1)
+  const [selectedAccount, setSelectedAccount] = useState<AccountRecord | null>(null)
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState<string>('')
-
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    reset,
-    formState: { errors, isSubmitting }
-  } = useForm<AccountFormValues>({
-    defaultValues: {
-      accountName: '',
-      accountTypeId: '',
-      accountIcon: 'wallet',
-      accountColor: '#6366f1'
-    }
-  })
-
-  // Watch fields for rendering active selections in the modal
-  const selectedIcon = watch('accountIcon')
-  const selectedColor = watch('accountColor')
 
   const currencySymbol = useMemo(() => getCurrencySymbol(currencyType), [currencyType])
 
@@ -85,16 +58,25 @@ function Accounts(): React.JSX.Element {
     setIsLoading(true)
     try {
       if (window.api) {
-        const [accs, types, configVal] = await Promise.all([
+        const [accs, types, configVal, cats, monthStartVal] = await Promise.all([
           window.api.listAccounts ? window.api.listAccounts() : [],
           window.api.listAccountTypes ? window.api.listAccountTypes() : [],
-          window.api.getConfigurationValue ? window.api.getConfigurationValue('CURRENCY_TYPE') : undefined
+          window.api.getConfigurationValue ? window.api.getConfigurationValue('CURRENCY_TYPE') : undefined,
+          window.api.listCategories ? window.api.listCategories() : [],
+          window.api.getConfigurationValue ? window.api.getConfigurationValue('MONTH_START_DATE') : undefined
         ])
 
         setAccounts(accs || [])
         setAccountTypes(types || [])
+        setCategories(cats || [])
         if (configVal?.configuration_value) {
           setCurrencyType(configVal.configuration_value)
+        }
+        if (monthStartVal?.configuration_value) {
+          const parsed = parseInt(monthStartVal.configuration_value, 10)
+          if (!isNaN(parsed) && parsed >= 1 && parsed <= 31) {
+            setMonthStartDay(parsed)
+          }
         }
       }
     } catch (err) {
@@ -110,12 +92,6 @@ function Accounts(): React.JSX.Element {
 
   const handleOpenModal = (): void => {
     setSaveError(null)
-    reset({
-      accountName: '',
-      accountTypeId: accountTypes[0]?.account_type_id.toString() || '1',
-      accountIcon: 'wallet',
-      accountColor: COLOR_PALETTE[0] || '#6366f1'
-    })
     setIsModalOpen(true)
   }
 
@@ -153,6 +129,27 @@ function Accounts(): React.JSX.Element {
     const query = searchQuery.toLowerCase().trim()
     return accounts.filter((acc) => acc.account_name.toLowerCase().includes(query))
   }, [accounts, searchQuery])
+
+  // Active selected account resolved from latest accounts state
+  const activeSelectedAccount = useMemo(() => {
+    if (!selectedAccount) return null
+    return accounts.find((a) => a.account_id === selectedAccount.account_id) || selectedAccount
+  }, [accounts, selectedAccount])
+
+  if (activeSelectedAccount) {
+    return (
+      <AccountDetail
+        account={activeSelectedAccount}
+        accountTypes={accountTypes}
+        categories={categories}
+        accounts={accounts}
+        monthStartDay={monthStartDay}
+        currencyType={currencyType}
+        onBack={() => setSelectedAccount(null)}
+        onAccountUpdated={fetchData}
+      />
+    )
+  }
 
   return (
     <section className="content-area accounts-page relative">
@@ -345,7 +342,9 @@ function Accounts(): React.JSX.Element {
                       return (
                         <div
                           key={acc.account_id}
-                          className="flex items-center gap-3.5 p-3.5 rounded-2xl border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] hover:border-emerald-500/40 hover:shadow-md transition-all group/card cursor-default"
+                          onClick={() => setSelectedAccount(acc)}
+                          className="flex items-center gap-3.5 p-3.5 rounded-2xl border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] hover:border-emerald-500/50 hover:shadow-md hover:scale-[1.015] active:scale-[0.985] transition-all group/card cursor-pointer"
+                          title={`View ${acc.account_name} transactions & details`}
                         >
                           {/* Account Icon Badge */}
                           <div
@@ -358,7 +357,7 @@ function Accounts(): React.JSX.Element {
                           {/* Account Name and Balance */}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-1">
-                              <h4 className="font-semibold text-sm truncate text-[var(--theme-text-strong)]">
+                              <h4 className="font-semibold text-sm truncate text-[var(--theme-text-strong)] group-hover/card:text-emerald-500 transition-colors">
                                 {acc.account_name}
                               </h4>
                               {isNegative && (
@@ -388,83 +387,17 @@ function Accounts(): React.JSX.Element {
         </div>
       )}
 
-      {/* Modal Dialog */}
-      <FormModal
+      {/* Shared AccountFormModal in 'create' mode */}
+      <AccountFormModal
         isOpen={isModalOpen}
-        title="Create New Account"
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleSubmit(onSubmit)}
-        isSubmitting={isSubmitting}
-        submitLabel="Save Account"
+        mode="create"
+        accountTypes={accountTypes}
+        currencySymbol={currencySymbol}
+        currencyType={currencyType}
         saveError={saveError}
-      >
-        {/* Type Select and Name Input */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
-              Account Type
-            </label>
-            <select
-              {...register('accountTypeId', { required: true })}
-              className="w-full px-3.5 py-2.5 text-sm bg-[var(--color-background-mute)] border border-[var(--theme-border-soft)] rounded-xl text-[var(--theme-text-strong)] focus:outline-none focus:border-emerald-500/50 cursor-pointer transition-colors"
-            >
-              {accountTypes.map((t) => (
-                <option
-                  key={t.account_type_id}
-                  value={t.account_type_id.toString()}
-                  className="bg-[var(--color-background-mute)] text-[var(--theme-text-strong)]"
-                >
-                  {t.account_type_name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
-              Account Name
-            </label>
-            <input
-              type="text"
-              placeholder="Enter name (e.g. Main Bank, Wallet)"
-              autoComplete="off"
-              {...register('accountName', {
-                required: 'Account name is required',
-                maxLength: { value: 30, message: 'Max 30 characters allowed' }
-              })}
-              className="w-full px-3.5 py-2.5 text-sm bg-[var(--theme-control-bg)] border border-[var(--theme-border-soft)] rounded-xl text-[var(--theme-text-strong)] focus:outline-none focus:border-emerald-500/50 transition-colors"
-            />
-            {errors.accountName && (
-              <span className="text-[11px] text-red-400 font-medium">
-                {errors.accountName.message}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Icon Selector */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
-            Account Icon
-          </label>
-          <IconPicker
-            selectedIcon={selectedIcon}
-            selectedColor={selectedColor}
-            onSelect={(iconName) => setValue('accountIcon', iconName)}
-          />
-        </div>
-
-        {/* Color Selector */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
-            Account Color
-          </label>
-          <ColorPicker
-            selectedColor={selectedColor}
-            onSelect={(color) => setValue('accountColor', color)}
-          />
-        </div>
-      </FormModal>
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={onSubmit}
+      />
     </section>
   )
 }

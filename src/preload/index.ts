@@ -89,6 +89,21 @@ const api = {
       accountIcon,
       accountColor
     ),
+  updateAccount: (
+    accountId: number,
+    accountName: string,
+    accountTypeId: number,
+    accountIcon: string,
+    accountColor: string
+  ): Promise<void> =>
+    electronAPI.ipcRenderer.invoke(
+      'db:updateAccount',
+      accountId,
+      accountName,
+      accountTypeId,
+      accountIcon,
+      accountColor
+    ),
   listTransactionTypes: (): Promise<
     Array<{
       transaction_type_id: number
