@@ -7,11 +7,13 @@ import {
   TrendingDown,
   Wallet,
   Pencil,
+  Trash2,
   ReceiptText
 } from 'lucide-react'
 import { Icon } from './Icon'
 import TransactionItem from './TransactionItem'
 import AccountFormModal, { AccountFormValues } from './AccountFormModal'
+import ConfirmModal from './ConfirmModal'
 import { getAccountingPeriod, formatPeriodDateRange, formatDayHeader } from '../utils/date'
 import { getCurrencySymbol } from '../utils/currency'
 import type { AccountRecord, AccountTypeRecord, CategoryRecord, TransactionRecord } from '../types'
@@ -41,6 +43,10 @@ export default function AccountDetail({
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false)
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const currencySymbol = useMemo(() => getCurrencySymbol(currencyType), [currencyType])
   const symbol = currencySymbol || currencyType
@@ -180,7 +186,10 @@ export default function AccountDetail({
         throw new Error('Please select a valid account type.')
       }
 
-      const newAmount = data.accountAmount === '' || data.accountAmount === undefined ? 0 : parseFloat(data.accountAmount)
+      const newAmount =
+        data.accountAmount === '' || data.accountAmount === undefined
+          ? 0
+          : parseFloat(data.accountAmount)
       if (isNaN(newAmount)) {
         throw new Error('Please enter a valid amount.')
       }
@@ -244,6 +253,26 @@ export default function AccountDetail({
     }
   }
 
+  const handleDeleteAccount = async (): Promise<void> => {
+    setDeleteError(null)
+    setIsDeleting(true)
+    try {
+      if (!window.api?.deleteAccount) {
+        throw new Error('Delete account function is not available.')
+      }
+      await window.api.deleteAccount(account.account_id)
+      setIsDeleteModalOpen(false)
+      if (onAccountUpdated) {
+        await onAccountUpdated()
+      }
+      onBack()
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete account')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
   return (
     <section className="content-area account-detail-page relative flex flex-col gap-5">
       {/* Top Navigation & Account Banner */}
@@ -275,15 +304,28 @@ export default function AccountDetail({
                   {accountType.account_type_name}
                 </span>
               )}
-              {/* Edit Account Button */}
-              <button
-                type="button"
-                onClick={handleOpenEditModal}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--theme-text-muted)] hover:text-emerald-500 hover:bg-[var(--theme-control-hover)] transition-all cursor-pointer"
-                title="Edit account details and balance"
-              >
-                <Pencil size={15} />
-              </button>
+              {/* Action Buttons: Edit and Delete */}
+              <div className="flex items-center gap-1 ml-1">
+                <button
+                  type="button"
+                  onClick={handleOpenEditModal}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--theme-text-muted)] hover:text-emerald-500 hover:bg-[var(--theme-control-hover)] transition-all cursor-pointer"
+                  title="Edit account details and balance"
+                >
+                  <Pencil size={15} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteError(null)
+                    setIsDeleteModalOpen(true)
+                  }}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--theme-text-muted)] hover:text-red-500 hover:bg-red-500/10 transition-all cursor-pointer"
+                  title="Delete account"
+                >
+                  <Trash2 size={15} />
+                </button>
+              </div>
             </div>
             <p className="text-xs text-[var(--theme-text-muted)] mt-0.5">
               Account cycle summary &amp; day-wise transaction records
@@ -469,6 +511,26 @@ export default function AccountDetail({
         saveError={saveError}
         onClose={() => setIsEditModalOpen(false)}
         onSubmit={onEditSubmit}
+      />
+
+      {/* Confirmation Modal for Account Deletion */}
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        title="Delete Account"
+        itemName={account.account_name}
+        itemIcon={<Icon icon={account.account_icon} size={20} />}
+        itemColor={account.account_color}
+        message="Are you sure you want to delete this account?"
+        subMessage="Past transactions will remain in your transaction history under this account name. However, this account will be deactivated and will no longer appear on your Accounts page or be available for new transactions."
+        confirmLabel="Delete Account"
+        cancelLabel="Cancel"
+        isDestructive={true}
+        isProcessing={isDeleting}
+        error={deleteError}
+        onClose={() => {
+          if (!isDeleting) setIsDeleteModalOpen(false)
+        }}
+        onConfirm={handleDeleteAccount}
       />
     </section>
   )

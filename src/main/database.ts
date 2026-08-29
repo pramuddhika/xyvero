@@ -644,6 +644,19 @@ export function updateAccount(
     .run(trimmedName, accountTypeId, accountIcon, accountColor, accountId)
 }
 
+export function deleteAccount(accountId: number): void {
+  const database = getDatabase()
+  database
+    .prepare(
+      `
+        UPDATE accounts
+        SET is_active = 0
+        WHERE account_id = ?
+      `
+    )
+    .run(accountId)
+}
+
 export type TransactionTypeRecord = {
   transaction_type_id: number
   transaction_type_name: string

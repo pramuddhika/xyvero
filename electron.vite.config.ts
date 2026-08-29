@@ -15,6 +15,7 @@ import {
   listAccounts,
   addAccount,
   updateAccount,
+  deleteAccount,
   listTransactionTypes,
   listTransactions,
   addTransaction
@@ -206,6 +207,26 @@ function devDatabasePlugin(): Plugin {
                 parsed.accountIcon,
                 parsed.accountColor
               )
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ success: true }))
+            } catch (err) {
+              res.statusCode = 500
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }))
+            }
+          })
+          return
+        }
+
+        if (pathname === '/api/deleteAccount' && req.method === 'POST') {
+          let body = ''
+          req.on('data', (chunk) => {
+            body += chunk
+          })
+          req.on('end', () => {
+            try {
+              const parsed = JSON.parse(body)
+              deleteAccount(parsed.accountId)
               res.setHeader('Content-Type', 'application/json')
               res.end(JSON.stringify({ success: true }))
             } catch (err) {

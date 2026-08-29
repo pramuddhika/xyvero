@@ -17,6 +17,7 @@ import {
   listAccounts,
   addAccount,
   updateAccount,
+  deleteAccount,
   listTransactionTypes,
   listTransactions,
   addTransaction
@@ -162,6 +163,9 @@ app.whenReady().then(() => {
       updateAccount(accountId, accountName, accountTypeId, accountIcon, accountColor)
     }
   )
+  ipcMain.handle('db:deleteAccount', (_, accountId: number) => {
+    deleteAccount(accountId)
+  })
   ipcMain.handle('db:listTransactionTypes', () => listTransactionTypes())
   ipcMain.handle('db:listTransactions', () => listTransactions())
   ipcMain.handle(

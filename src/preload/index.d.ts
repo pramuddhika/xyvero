@@ -81,6 +81,7 @@ interface AppApi {
     accountIcon: string,
     accountColor: string
   ) => Promise<void>
+  deleteAccount: (accountId: number) => Promise<void>
   listCategoryTypes: () => Promise<CategoryTypeRecord[]>
   listCategories: () => Promise<CategoryRecord[]>
   addCategory: (

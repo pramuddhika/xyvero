@@ -104,6 +104,8 @@ const api = {
       accountIcon,
       accountColor
     ),
+  deleteAccount: (accountId: number): Promise<void> =>
+    electronAPI.ipcRenderer.invoke('db:deleteAccount', accountId),
   listTransactionTypes: (): Promise<
     Array<{
       transaction_type_id: number

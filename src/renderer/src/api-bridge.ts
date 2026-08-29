@@ -94,6 +94,17 @@ if (typeof window !== 'undefined' && !window.api) {
         throw new Error(result.error)
       }
     },
+    deleteAccount: async (accountId: number): Promise<void> => {
+      const res = await fetch('/api/deleteAccount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId })
+      })
+      const result = await parseJson<{ success?: boolean; error?: string }>(res)
+      if (result.error) {
+        throw new Error(result.error)
+      }
+    },
     listCategoryTypes: async () => {
       const res = await fetch('/api/listCategoryTypes')
       return parseJson(res)
