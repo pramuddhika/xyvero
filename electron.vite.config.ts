@@ -137,7 +137,6 @@ function devDatabasePlugin(): Plugin {
               const parsed = JSON.parse(body)
               const categoryId = addCategory(
                 parsed.categoryName,
-                parsed.categoryAmount,
                 parsed.categoryGroupId,
                 parsed.categoryIcon,
                 parsed.categoryColour
@@ -176,7 +175,6 @@ function devDatabasePlugin(): Plugin {
               const parsed = JSON.parse(body)
               const accountId = addAccount(
                 parsed.accountName,
-                parsed.accountAmount,
                 parsed.accountTypeId,
                 parsed.accountIcon,
                 parsed.accountColor

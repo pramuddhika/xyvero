@@ -128,12 +128,11 @@ app.whenReady().then(() => {
     (
       _,
       categoryName: string,
-      categoryAmount: number,
       categoryGroupId: number,
       categoryIcon: string,
       categoryColour: string
     ) => {
-      return addCategory(categoryName, categoryAmount, categoryGroupId, categoryIcon, categoryColour)
+      return addCategory(categoryName, categoryGroupId, categoryIcon, categoryColour)
     }
   )
   ipcMain.handle('db:listAccounts', () => listAccounts())
@@ -142,12 +141,11 @@ app.whenReady().then(() => {
     (
       _,
       accountName: string,
-      accountAmount: number,
       accountTypeId: number,
       accountIcon: string,
       accountColor: string
     ) => {
-      return addAccount(accountName, accountAmount, accountTypeId, accountIcon, accountColor)
+      return addAccount(accountName, accountTypeId, accountIcon, accountColor)
     }
   )
   ipcMain.handle('db:listTransactionTypes', () => listTransactionTypes())

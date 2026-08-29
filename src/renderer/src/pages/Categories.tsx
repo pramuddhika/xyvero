@@ -12,7 +12,6 @@ import type { CategoryTypeRecord, CategoryRecord } from '../types'
 
 interface CategoryFormValues {
   categoryName: string
-  categoryAmount: string
   categoryGroupId: string
   categoryIcon: string
   categoryColour: string
@@ -37,7 +36,6 @@ function Categories(): React.JSX.Element {
   } = useForm<CategoryFormValues>({
     defaultValues: {
       categoryName: '',
-      categoryAmount: '0.00',
       categoryGroupId: '',
       categoryIcon: 'circle',
       categoryColour: '#6366f1'
@@ -97,7 +95,6 @@ function Categories(): React.JSX.Element {
     setSaveError(null)
     reset({
       categoryName: '',
-      categoryAmount: '0.00',
       categoryGroupId: categoryTypes[0]?.category_id.toString() || '1',
       categoryIcon: 'circle',
       categoryColour: COLOR_PALETTE[0] || '#6366f1'
@@ -112,16 +109,8 @@ function Categories(): React.JSX.Element {
         throw new Error('Database save function not available.')
       }
 
-      const amount = data.categoryAmount === '' ? 0 : parseFloat(data.categoryAmount)
-      if (isNaN(amount) || amount < 0) {
-        throw new Error('Please enter a valid amount.')
-      }
-
-      const finalAmount = parseFloat(amount.toFixed(2))
-
       await window.api.addCategory(
         data.categoryName.trim(),
-        finalAmount,
         parseInt(data.categoryGroupId, 10),
         data.categoryIcon,
         data.categoryColour
@@ -323,39 +312,6 @@ function Categories(): React.JSX.Element {
               </span>
             )}
           </div>
-        </div>
-
-        {/* Amount Input */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
-            Category Amount
-          </label>
-          <div className="flex items-stretch rounded-xl border border-[var(--theme-border-soft)] bg-[var(--theme-control-bg)] overflow-hidden focus-within:border-emerald-500/50 transition-colors">
-            <span className="px-3.5 py-2.5 bg-[var(--theme-surface-strong)] text-sm font-semibold border-r border-[var(--theme-border-soft)] text-[var(--theme-text-muted)] min-w-[54px] flex items-center justify-center font-mono">
-              {currencySymbol || currencyType}
-            </span>
-            <input
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="0.00"
-              onKeyDown={(e) => {
-                if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') {
-                  e.preventDefault()
-                }
-              }}
-              {...register('categoryAmount', {
-                required: 'Amount is required',
-                min: { value: 0, message: 'Amount cannot be negative' }
-              })}
-              className="flex-1 px-3.5 py-2.5 text-sm bg-transparent border-0 text-[var(--theme-text-strong)] focus:outline-none font-mono no-spinners"
-            />
-          </div>
-          {errors.categoryAmount && (
-            <span className="text-[11px] text-red-400 font-medium">
-              {errors.categoryAmount.message}
-            </span>
-          )}
         </div>
 
         {/* Icon Selector */}

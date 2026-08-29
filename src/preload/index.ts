@@ -54,7 +54,6 @@ const api = {
   > => electronAPI.ipcRenderer.invoke('db:listCategories'),
   addCategory: (
     categoryName: string,
-    categoryAmount: number,
     categoryGroupId: number,
     categoryIcon: string,
     categoryColour: string
@@ -62,7 +61,6 @@ const api = {
     electronAPI.ipcRenderer.invoke(
       'db:addCategory',
       categoryName,
-      categoryAmount,
       categoryGroupId,
       categoryIcon,
       categoryColour
@@ -80,7 +78,6 @@ const api = {
   > => electronAPI.ipcRenderer.invoke('db:listAccounts'),
   addAccount: (
     accountName: string,
-    accountAmount: number,
     accountTypeId: number,
     accountIcon: string,
     accountColor: string
@@ -88,7 +85,6 @@ const api = {
     electronAPI.ipcRenderer.invoke(
       'db:addAccount',
       accountName,
-      accountAmount,
       accountTypeId,
       accountIcon,
       accountColor

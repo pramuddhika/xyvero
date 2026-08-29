@@ -70,7 +70,6 @@ interface AppApi {
   listAccounts: () => Promise<AccountRecord[]>
   addAccount: (
     accountName: string,
-    accountAmount: number,
     accountTypeId: number,
     accountIcon: string,
     accountColor: string
@@ -79,7 +78,6 @@ interface AppApi {
   listCategories: () => Promise<CategoryRecord[]>
   addCategory: (
     categoryName: string,
-    categoryAmount: number,
     categoryGroupId: number,
     categoryIcon: string,
     categoryColour: string

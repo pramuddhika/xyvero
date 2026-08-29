@@ -48,7 +48,6 @@ if (typeof window !== 'undefined' && !window.api) {
     },
     addAccount: async (
       accountName: string,
-      accountAmount: number,
       accountTypeId: number,
       accountIcon: string,
       accountColor: string
@@ -58,7 +57,6 @@ if (typeof window !== 'undefined' && !window.api) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           accountName,
-          accountAmount,
           accountTypeId,
           accountIcon,
           accountColor
@@ -83,7 +81,6 @@ if (typeof window !== 'undefined' && !window.api) {
     },
     addCategory: async (
       categoryName: string,
-      categoryAmount: number,
       categoryGroupId: number,
       categoryIcon: string,
       categoryColour: string
@@ -93,7 +90,6 @@ if (typeof window !== 'undefined' && !window.api) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           categoryName,
-          categoryAmount,
           categoryGroupId,
           categoryIcon,
           categoryColour

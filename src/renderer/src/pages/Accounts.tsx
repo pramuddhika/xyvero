@@ -12,7 +12,6 @@ import type { AccountTypeRecord, AccountRecord } from '../types'
 
 interface AccountFormValues {
   accountName: string
-  accountAmount: string
   accountTypeId: string
   accountIcon: string
   accountColor: string
@@ -37,7 +36,6 @@ function Accounts(): React.JSX.Element {
   } = useForm<AccountFormValues>({
     defaultValues: {
       accountName: '',
-      accountAmount: '0.00',
       accountTypeId: '',
       accountIcon: 'wallet',
       accountColor: '#6366f1'
@@ -114,7 +112,6 @@ function Accounts(): React.JSX.Element {
     setSaveError(null)
     reset({
       accountName: '',
-      accountAmount: '0.00',
       accountTypeId: accountTypes[0]?.account_type_id.toString() || '1',
       accountIcon: 'wallet',
       accountColor: COLOR_PALETTE[0] || '#6366f1'
@@ -131,21 +128,13 @@ function Accounts(): React.JSX.Element {
         )
       }
 
-      const amount = data.accountAmount === '' ? 0 : parseFloat(data.accountAmount)
-      if (isNaN(amount)) {
-        throw new Error('Please enter a valid amount.')
-      }
-
       const accountTypeId = parseInt(data.accountTypeId, 10)
       if (isNaN(accountTypeId)) {
         throw new Error('Please select a valid account type.')
       }
 
-      const finalAmount = parseFloat(amount.toFixed(2))
-
       await window.api.addAccount(
         data.accountName.trim(),
-        finalAmount,
         accountTypeId,
         data.accountIcon,
         data.accountColor
@@ -451,40 +440,6 @@ function Accounts(): React.JSX.Element {
               </span>
             )}
           </div>
-        </div>
-
-        {/* Amount Input */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)] flex items-center justify-between">
-            <span>Initial Balance / Amount</span>
-            <span className="text-[11px] font-normal italic lowercase tracking-normal text-[var(--theme-text-muted)]">
-              (use - for liabilities)
-            </span>
-          </label>
-          <div className="flex items-stretch rounded-xl border border-[var(--theme-border-soft)] bg-[var(--theme-control-bg)] overflow-hidden focus-within:border-emerald-500/50 transition-colors">
-            <span className="px-3.5 py-2.5 bg-[var(--theme-surface-strong)] text-sm font-semibold border-r border-[var(--theme-border-soft)] text-[var(--theme-text-muted)] min-w-[54px] flex items-center justify-center font-mono">
-              {currencySymbol || currencyType}
-            </span>
-            <input
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              onKeyDown={(e) => {
-                if (e.key === '+' || e.key === 'e' || e.key === 'E') {
-                  e.preventDefault()
-                }
-              }}
-              {...register('accountAmount', {
-                required: 'Amount is required'
-              })}
-              className="flex-1 px-3.5 py-2.5 text-sm bg-transparent border-0 text-[var(--theme-text-strong)] focus:outline-none font-mono no-spinners"
-            />
-          </div>
-          {errors.accountAmount && (
-            <span className="text-[11px] text-red-400 font-medium">
-              {errors.accountAmount.message}
-            </span>
-          )}
         </div>
 
         {/* Icon Selector */}
