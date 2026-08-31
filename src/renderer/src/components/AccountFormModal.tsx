@@ -129,41 +129,39 @@ export default function AccountFormModal({
         </div>
       </div>
 
-      {/* Amount Input (Visible in Edit mode for balance adjustment) */}
-      {mode === 'edit' && (
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)] flex items-center justify-between">
-            <span>Total Net Balance</span>
-            <span className="text-[11px] font-normal italic lowercase tracking-normal text-[var(--theme-text-muted)]">
-              (adjusting creates an Income/Expense record)
-            </span>
-          </label>
-          <div className="flex items-stretch rounded-xl border border-[var(--theme-border-soft)] bg-[var(--theme-control-bg)] overflow-hidden focus-within:border-emerald-500/50 transition-colors">
-            <span className="px-3.5 py-2.5 bg-[var(--theme-surface-strong)] text-sm font-semibold border-r border-[var(--theme-border-soft)] text-[var(--theme-text-muted)] min-w-[54px] flex items-center justify-center font-mono">
-              {currencySymbol || currencyType}
-            </span>
-            <input
-              type="number"
-              step="0.01"
-              placeholder="0.00"
-              onKeyDown={(e) => {
-                if (e.key === '+' || e.key === 'e' || e.key === 'E') {
-                  e.preventDefault()
-                }
-              }}
-              {...register('accountAmount', {
-                required: 'Amount is required'
-              })}
-              className="flex-1 px-3.5 py-2.5 text-sm bg-transparent border-0 text-[var(--theme-text-strong)] focus:outline-none font-mono no-spinners"
-            />
-          </div>
-          {errors.accountAmount && (
-            <span className="text-[11px] text-red-400 font-medium">
-              {errors.accountAmount.message}
-            </span>
-          )}
+      {/* Amount Input (Visible in Create mode for opening balance and in Edit mode for balance adjustment) */}
+      <div className="flex flex-col gap-2">
+        <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)] flex items-center justify-between">
+          <span>{mode === 'edit' ? 'Total Net Balance' : 'Opening Balance'}</span>
+          <span className="text-[11px] font-normal italic lowercase tracking-normal text-[var(--theme-text-muted)]">
+            {mode === 'edit'
+              ? '(adjusting creates an Income/Expense record)'
+              : "(records an 'Account Opening' income transaction)"}
+          </span>
+        </label>
+        <div className="flex items-stretch rounded-xl border border-[var(--theme-border-soft)] bg-[var(--theme-control-bg)] overflow-hidden focus-within:border-emerald-500/50 transition-colors">
+          <span className="px-3.5 py-2.5 bg-[var(--theme-surface-strong)] text-sm font-semibold border-r border-[var(--theme-border-soft)] text-[var(--theme-text-muted)] min-w-[54px] flex items-center justify-center font-mono">
+            {currencySymbol || currencyType}
+          </span>
+          <input
+            type="number"
+            step="0.01"
+            placeholder="0.00"
+            onKeyDown={(e) => {
+              if (e.key === '+' || e.key === 'e' || e.key === 'E') {
+                e.preventDefault()
+              }
+            }}
+            {...register('accountAmount')}
+            className="flex-1 px-3.5 py-2.5 text-sm bg-transparent border-0 text-[var(--theme-text-strong)] focus:outline-none font-mono no-spinners"
+          />
         </div>
-      )}
+        {errors.accountAmount && (
+          <span className="text-[11px] text-red-400 font-medium">
+            {errors.accountAmount.message}
+          </span>
+        )}
+      </div>
 
       {/* Icon Selector */}
       <div className="flex flex-col gap-2">

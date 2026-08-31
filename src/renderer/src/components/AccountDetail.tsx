@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { Icon } from './Icon'
 import TransactionItem from './TransactionItem'
+import TransactionDrawer, { TransactionFormData } from './TransactionDrawer'
 import AccountFormModal, { AccountFormValues } from './AccountFormModal'
 import ConfirmModal from './ConfirmModal'
 import { getAccountingPeriod, formatPeriodDateRange, formatDayHeader } from '../utils/date'
@@ -47,6 +48,10 @@ export default function AccountDetail({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false)
   const [isDeleting, setIsDeleting] = useState<boolean>(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  // Edit transaction state
+  const [editingTransaction, setEditingTransaction] = useState<TransactionRecord | null>(null)
+  const [isTransactionDrawerOpen, setIsTransactionDrawerOpen] = useState<boolean>(false)
 
   const currencySymbol = useMemo(() => getCurrencySymbol(currencyType), [currencyType])
   const symbol = currencySymbol || currencyType
@@ -273,6 +278,50 @@ export default function AccountDetail({
     }
   }
 
+  // Handle saving an edited transaction
+  const handleSaveEditedTransaction = async (data: TransactionFormData): Promise<void> => {
+    try {
+      if (!data.timeStamp) return
+      if (window.api?.updateTransaction) {
+        await window.api.updateTransaction(
+          data.timeStamp,
+          data.transactionTime,
+          data.transactionTypeId,
+          data.toAccountId,
+          data.fromAccountId,
+          data.categoryId,
+          data.amount,
+          data.fees,
+          data.note
+        )
+      }
+      setIsTransactionDrawerOpen(false)
+      setEditingTransaction(null)
+      await fetchTransactions()
+      if (onAccountUpdated) {
+        await onAccountUpdated()
+      }
+    } catch (err) {
+      console.error('Failed to update transaction:', err)
+    }
+  }
+
+  // Handle deleting a transaction
+  const handleDeleteTransaction = async (timeStamp: string): Promise<void> => {
+    try {
+      if (window.api?.deleteTransaction) {
+        await window.api.deleteTransaction(timeStamp)
+        await fetchTransactions()
+        if (onAccountUpdated) {
+          await onAccountUpdated()
+        }
+      }
+    } catch (err) {
+      console.error('Failed to delete transaction:', err)
+      throw err
+    }
+  }
+
   return (
     <section className="content-area account-detail-page relative flex flex-col gap-5">
       {/* Top Navigation & Account Banner */}
@@ -473,7 +522,7 @@ export default function AccountDetail({
                     </div>
                   </div>
 
-                  {/* Day Transaction Items */}
+                  {/* Day Transaction Items (All transactions clickable for editing) */}
                   <div className="flex flex-col gap-2 pl-1 sm:pl-2">
                     {group.transactions.map((tx) => (
                       <TransactionItem
@@ -484,6 +533,10 @@ export default function AccountDetail({
                         currentAccountId={account.account_id}
                         currencySymbol={currencySymbol}
                         currencyType={currencyType}
+                        onClick={() => {
+                          setEditingTransaction(tx)
+                          setIsTransactionDrawerOpen(true)
+                        }}
                       />
                     ))}
                   </div>
@@ -531,6 +584,23 @@ export default function AccountDetail({
           if (!isDeleting) setIsDeleteModalOpen(false)
         }}
         onConfirm={handleDeleteAccount}
+      />
+
+      {/* TransactionDrawer in 'edit' mode for editing selected transaction */}
+      <TransactionDrawer
+        isOpen={isTransactionDrawerOpen}
+        mode="edit"
+        initialTransaction={editingTransaction}
+        accounts={accounts}
+        categories={categories}
+        currencySymbol={currencySymbol}
+        currencyType={currencyType}
+        onClose={() => {
+          setIsTransactionDrawerOpen(false)
+          setEditingTransaction(null)
+        }}
+        onSave={handleSaveEditedTransaction}
+        onDelete={handleDeleteTransaction}
       />
     </section>
   )

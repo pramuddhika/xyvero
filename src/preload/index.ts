@@ -146,6 +146,31 @@ const api = {
       fees,
       note
     ),
+  updateTransaction: (
+    timeStamp: string,
+    transactionTime: string,
+    transactionTypeId: number,
+    toAccountId: number,
+    fromAccountId: number | null | undefined,
+    categoryId: number | null | undefined,
+    amount: number,
+    fees: number = 0,
+    note: string
+  ): Promise<void> =>
+    electronAPI.ipcRenderer.invoke(
+      'db:updateTransaction',
+      timeStamp,
+      transactionTime,
+      transactionTypeId,
+      toAccountId,
+      fromAccountId,
+      categoryId,
+      amount,
+      fees,
+      note
+    ),
+  deleteTransaction: (timeStamp: string): Promise<void> =>
+    electronAPI.ipcRenderer.invoke('db:deleteTransaction', timeStamp),
   getVersion: (): Promise<string> => electronAPI.ipcRenderer.invoke('app:getVersion'),
   updater: {
     onUpdateAvailable: (

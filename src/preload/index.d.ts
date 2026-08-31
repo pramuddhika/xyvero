@@ -102,6 +102,18 @@ interface AppApi {
     fees: number | undefined,
     note: string
   ) => Promise<string>
+  updateTransaction: (
+    timeStamp: string,
+    transactionTime: string,
+    transactionTypeId: number,
+    toAccountId: number,
+    fromAccountId: number | null | undefined,
+    categoryId: number | null | undefined,
+    amount: number,
+    fees: number | undefined,
+    note: string
+  ) => Promise<void>
+  deleteTransaction: (timeStamp: string) => Promise<void>
   getVersion: () => Promise<string>
   updater: {
     onUpdateAvailable: (callback: (info: UpdateInfo) => void) => () => void

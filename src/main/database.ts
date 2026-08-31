@@ -777,3 +777,82 @@ export function addTransaction(
 
   return timeStamp
 }
+
+export function updateTransaction(
+  timeStamp: string,
+  transactionTime: string,
+  transactionTypeId: number,
+  toAccountId: number,
+  fromAccountId: number | null | undefined,
+  categoryId: number | null | undefined,
+  amount: number,
+  fees: number = 0,
+  note: string
+): void {
+  const database = getDatabase()
+  const trimmedNote = note.trim()
+  if (!trimmedNote) {
+    throw new Error('Transaction note is required.')
+  }
+  if (!toAccountId) {
+    throw new Error('To Account is required.')
+  }
+  if (!amount || amount <= 0) {
+    throw new Error('Amount must be greater than 0.')
+  }
+
+  const finalFromAccountId =
+    transactionTypeId === 3 && fromAccountId ? Number(fromAccountId) : null
+  const finalCategoryId =
+    transactionTypeId !== 3 && categoryId ? Number(categoryId) : null
+
+  if (transactionTypeId === 3 && !finalFromAccountId) {
+    throw new Error('From Account is required for Transfer transactions.')
+  }
+
+  const cleanAmount = parseFloat(Number(amount).toFixed(2))
+  const cleanFees = parseFloat(Number(fees || 0).toFixed(2))
+
+  database
+    .prepare(
+      `
+        UPDATE transactions
+        SET
+          transaction_time = ?,
+          transaction_type_id = ?,
+          to_account_id = ?,
+          from_account_id = ?,
+          category_id = ?,
+          amount = ?,
+          fees = ?,
+          note = ?
+        WHERE time_stamp = ?
+      `
+    )
+    .run(
+      transactionTime,
+      transactionTypeId,
+      toAccountId,
+      finalFromAccountId,
+      finalCategoryId,
+      cleanAmount,
+      cleanFees,
+      trimmedNote,
+      timeStamp
+    )
+}
+
+export function deleteTransaction(timeStamp: string): void {
+  const database = getDatabase()
+  if (!timeStamp) {
+    throw new Error('Transaction timestamp is required.')
+  }
+  database
+    .prepare(
+      `
+        DELETE FROM transactions
+        WHERE time_stamp = ?
+      `
+    )
+    .run(timeStamp)
+}

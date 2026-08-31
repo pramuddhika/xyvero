@@ -11,10 +11,13 @@ import {
   Layers,
   FileText,
   ChevronDown,
-  Check
+  Check,
+  Pencil,
+  Trash2
 } from 'lucide-react'
 import { Icon } from './Icon'
-import type { AccountRecord, CategoryRecord } from '../types'
+import ConfirmModal from './ConfirmModal'
+import type { AccountRecord, CategoryRecord, TransactionRecord } from '../types'
 
 export type TransactionType = 'Expense' | 'Income' | 'Transfer'
 
@@ -25,6 +28,7 @@ const TRANSACTION_TYPE_MAP: Record<TransactionType, number> = {
 }
 
 export interface TransactionFormData {
+  timeStamp?: string
   transactionTypeId: number
   transactionType: TransactionType
   amount: number
@@ -43,7 +47,10 @@ interface TransactionDrawerProps {
   categories: CategoryRecord[]
   currencySymbol: string
   currencyType: string
+  initialTransaction?: TransactionRecord | null
+  mode?: 'create' | 'edit'
   onSave?: (data: TransactionFormData) => void | Promise<void>
+  onDelete?: (timeStamp: string) => void | Promise<void>
 }
 
 /**
@@ -307,7 +314,10 @@ export default function TransactionDrawer({
   categories,
   currencySymbol,
   currencyType,
-  onSave
+  initialTransaction,
+  mode = 'create',
+  onSave,
+  onDelete
 }: TransactionDrawerProps): React.JSX.Element {
   const [txType, setTxType] = useState<TransactionType>('Expense')
   const [amount, setAmount] = useState<string>('')
@@ -334,33 +344,64 @@ export default function TransactionDrawer({
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false)
   const [prevIsOpen, setPrevIsOpen] = useState<boolean>(isOpen)
 
-  // Reset form values when drawer opens
+  // Deletion state
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState<boolean>(false)
+  const [isDeleting, setIsDeleting] = useState<boolean>(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  // Reset or pre-fill form values when drawer opens
   if (isOpen !== prevIsOpen) {
     setPrevIsOpen(isOpen)
     if (isOpen) {
-      setAmount('')
-      setFees('0.00')
-      setNote('')
       setFormError(null)
       setAmountTouched(false)
       setNoteTouched(false)
       setIsSubmitted(false)
-      setTxDate(getLocalDateTimeString())
 
-      if (accounts.length > 0) {
-        setToAccountId(accounts[0].account_id.toString())
+      if (initialTransaction && mode === 'edit') {
+        const initialType: TransactionType =
+          initialTransaction.transaction_type_id === 1
+            ? 'Income'
+            : initialTransaction.transaction_type_id === 2
+              ? 'Expense'
+              : 'Transfer'
+        setTxType(initialType)
+        setAmount(initialTransaction.amount.toString())
+        setToAccountId(initialTransaction.to_account_id.toString())
         setFromAccountId(
-          accounts.length > 1 ? accounts[1].account_id.toString() : accounts[0].account_id.toString()
+          initialTransaction.from_account_id ? initialTransaction.from_account_id.toString() : ''
         )
-      }
+        setCategoryId(
+          initialTransaction.category_id ? initialTransaction.category_id.toString() : ''
+        )
+        setTxDate(initialTransaction.transaction_time)
+        setFees(
+          initialTransaction.fees !== undefined && initialTransaction.fees !== null
+            ? initialTransaction.fees.toFixed(2)
+            : '0.00'
+        )
+        setNote(initialTransaction.note || '')
+      } else {
+        setAmount('')
+        setFees('0.00')
+        setNote('')
+        setTxDate(getLocalDateTimeString())
 
-      const defaultCat = categories.find((c) =>
-        txType === 'Income' ? c.category_group_id === 1 : c.category_group_id === 2
-      )
-      if (defaultCat) {
-        setCategoryId(defaultCat.category_id.toString())
-      } else if (categories.length > 0) {
-        setCategoryId(categories[0].category_id.toString())
+        if (accounts.length > 0) {
+          setToAccountId(accounts[0].account_id.toString())
+          setFromAccountId(
+            accounts.length > 1 ? accounts[1].account_id.toString() : accounts[0].account_id.toString()
+          )
+        }
+
+        const defaultCat = categories.find((c) =>
+          txType === 'Income' ? c.category_group_id === 1 : c.category_group_id === 2
+        )
+        if (defaultCat) {
+          setCategoryId(defaultCat.category_id.toString())
+        } else if (categories.length > 0) {
+          setCategoryId(categories[0].category_id.toString())
+        }
       }
     }
   }
@@ -448,6 +489,7 @@ export default function TransactionDrawer({
 
     if (onSave) {
       onSave({
+        timeStamp: initialTransaction?.time_stamp,
         transactionTypeId,
         transactionType: txType,
         amount: parseFloat(numericAmount.toFixed(2)),
@@ -462,6 +504,8 @@ export default function TransactionDrawer({
 
     onClose()
   }
+
+  const isEditMode = mode === 'edit' && Boolean(initialTransaction)
 
   return (
     <>
@@ -486,17 +530,19 @@ export default function TransactionDrawer({
         <div className="flex items-center justify-between px-6 py-4.5 border-b border-[var(--theme-border-soft)] bg-[var(--color-background-mute)] shrink-0">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-500 shadow-inner">
-              <Plus size={22} strokeWidth={2.5} />
+              {isEditMode ? <Pencil size={20} /> : <Plus size={22} strokeWidth={2.5} />}
             </div>
             <div>
               <h3
                 id="transaction-drawer-title"
                 className="text-base font-bold text-[var(--theme-text-strong)]"
               >
-                New Transaction
+                {isEditMode ? 'Edit Transaction' : 'New Transaction'}
               </h3>
               <p className="text-xs text-[var(--theme-text-muted)]">
-                Record an expense, income, or account transfer
+                {isEditMode
+                  ? 'Update transaction details and date/time'
+                  : 'Record an expense, income, or account transfer'}
               </p>
             </div>
           </div>
@@ -519,39 +565,58 @@ export default function TransactionDrawer({
 
             {/* Transaction Type Selector (Expense / Income / Transfer) */}
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
-                Transaction Type
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
+                  Transaction Type
+                </label>
+                {isEditMode && (
+                  <span className="text-[10px] text-[var(--theme-text-muted)] italic font-medium">
+                    Locked in edit mode
+                  </span>
+                )}
+              </div>
               <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-[var(--theme-control-bg)] border border-[var(--theme-border-soft)]">
                 <button
                   type="button"
+                  disabled={isEditMode}
                   onClick={() => handleTypeChange('Expense')}
-                  className={`flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${txType === 'Expense'
+                  className={`flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all ${
+                    isEditMode ? 'cursor-not-allowed opacity-90' : 'cursor-pointer'
+                  } ${
+                    txType === 'Expense'
                       ? 'bg-red-500 text-white shadow-xs'
                       : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text-strong)]'
-                    }`}
+                  }`}
                 >
                   <TrendingDown size={14} />
                   <span>Expense</span>
                 </button>
                 <button
                   type="button"
+                  disabled={isEditMode}
                   onClick={() => handleTypeChange('Income')}
-                  className={`flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${txType === 'Income'
+                  className={`flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all ${
+                    isEditMode ? 'cursor-not-allowed opacity-90' : 'cursor-pointer'
+                  } ${
+                    txType === 'Income'
                       ? 'bg-emerald-600 text-white shadow-xs'
                       : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text-strong)]'
-                    }`}
+                  }`}
                 >
                   <TrendingUp size={14} />
                   <span>Income</span>
                 </button>
                 <button
                   type="button"
+                  disabled={isEditMode}
                   onClick={() => handleTypeChange('Transfer')}
-                  className={`flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${txType === 'Transfer'
+                  className={`flex items-center justify-center gap-1.5 py-2 text-xs font-bold rounded-lg transition-all ${
+                    isEditMode ? 'cursor-not-allowed opacity-90' : 'cursor-pointer'
+                  } ${
+                    txType === 'Transfer'
                       ? 'bg-blue-600 text-white shadow-xs'
                       : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text-strong)]'
-                    }`}
+                  }`}
                 >
                   <ArrowRightLeft size={14} />
                   <span>Transfer</span>
@@ -744,24 +809,74 @@ export default function TransactionDrawer({
           </div>
 
           {/* Drawer Footer Actions */}
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--theme-border-soft)] bg-[var(--color-background-mute)] shrink-0">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 text-sm font-semibold rounded-xl text-[var(--theme-text-strong)] hover:bg-[var(--theme-control-hover)] transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-6 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Plus size={16} />
-              <span>Save Transaction</span>
-            </button>
+          <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-[var(--theme-border-soft)] bg-[var(--color-background-mute)] shrink-0">
+            {isEditMode && onDelete ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteError(null)
+                  setIsDeleteConfirmOpen(true)
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-2.5 text-xs sm:text-sm font-semibold rounded-xl text-red-500 hover:text-red-600 hover:bg-red-500/10 border border-red-500/20 transition-all cursor-pointer shadow-2xs"
+                title="Delete transaction"
+              >
+                <Trash2 size={16} />
+                <span>Delete</span>
+              </button>
+            ) : (
+              <div />
+            )}
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2.5 text-sm font-semibold rounded-xl text-[var(--theme-text-strong)] hover:bg-[var(--theme-control-hover)] transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-6 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm hover:scale-[1.02] active:scale-[0.98]"
+              >
+                {isEditMode ? <Check size={16} /> : <Plus size={16} />}
+                <span>{isEditMode ? 'Update Transaction' : 'Save Transaction'}</span>
+              </button>
+            </div>
           </div>
         </form>
       </aside>
+
+      {/* Confirmation Modal for Transaction Deletion */}
+      <ConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        title="Delete Transaction"
+        itemName={`${txType} • ${currencySymbol} ${amount || '0.00'}`}
+        message="Are you sure you want to delete this transaction?"
+        subMessage="This transaction will be permanently removed and your account totals and balances will be recalculated."
+        confirmLabel="Delete Transaction"
+        cancelLabel="Cancel"
+        isDestructive={true}
+        isProcessing={isDeleting}
+        error={deleteError}
+        onClose={() => {
+          if (!isDeleting) setIsDeleteConfirmOpen(false)
+        }}
+        onConfirm={async () => {
+          if (!initialTransaction?.time_stamp || !onDelete) return
+          setIsDeleting(true)
+          setDeleteError(null)
+          try {
+            await onDelete(initialTransaction.time_stamp)
+            setIsDeleteConfirmOpen(false)
+            onClose()
+          } catch (err) {
+            setDeleteError(err instanceof Error ? err.message : 'Failed to delete transaction')
+          } finally {
+            setIsDeleting(false)
+          }
+        }}
+      />
     </>
   )
 }

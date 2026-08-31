@@ -12,6 +12,7 @@ interface TransactionItemProps {
   currentAccountId?: number
   currencySymbol?: string
   currencyType?: string
+  onClick?: () => void
 }
 
 export default function TransactionItem({
@@ -20,7 +21,8 @@ export default function TransactionItem({
   accounts,
   currentAccountId,
   currencySymbol = '$',
-  currencyType = 'USD'
+  currencyType = 'USD',
+  onClick
 }: TransactionItemProps): React.JSX.Element {
   const { transaction_type_id, to_account_id, from_account_id, category_id, amount, fees, note, transaction_time } =
     transaction
@@ -102,7 +104,13 @@ export default function TransactionItem({
   const iconName = category?.category_icon || (isTransfer ? 'layers' : 'circle')
 
   return (
-    <div className="flex items-center gap-3.5 p-3 sm:p-3.5 rounded-2xl border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] hover:border-emerald-500/30 hover:shadow-sm transition-all duration-150 group">
+    <div
+      onClick={onClick}
+      className={`flex items-center gap-3.5 p-3 sm:p-3.5 rounded-2xl border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] hover:border-emerald-500/40 hover:shadow-sm transition-all duration-150 group ${
+        onClick ? 'cursor-pointer hover:scale-[1.008] active:scale-[0.992]' : ''
+      }`}
+      title={onClick ? 'Click to edit transaction' : undefined}
+    >
       {/* Icon Badge */}
       <div
         className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl flex items-center justify-center text-white shrink-0 shadow-xs transition-transform group-hover:scale-105"

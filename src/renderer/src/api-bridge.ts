@@ -179,6 +179,48 @@ if (typeof window !== 'undefined' && !window.api) {
       }
       return result.timeStamp
     },
+    updateTransaction: async (
+      timeStamp: string,
+      transactionTime: string,
+      transactionTypeId: number,
+      toAccountId: number,
+      fromAccountId: number | null | undefined,
+      categoryId: number | null | undefined,
+      amount: number,
+      fees: number = 0,
+      note: string
+    ): Promise<void> => {
+      const res = await fetch('/api/updateTransaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          timeStamp,
+          transactionTime,
+          transactionTypeId,
+          toAccountId,
+          fromAccountId,
+          categoryId,
+          amount,
+          fees,
+          note
+        })
+      })
+      const result = await parseJson<{ success?: boolean; error?: string }>(res)
+      if (result.error) {
+        throw new Error(result.error)
+      }
+    },
+    deleteTransaction: async (timeStamp: string): Promise<void> => {
+      const res = await fetch('/api/deleteTransaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timeStamp })
+      })
+      const result = await parseJson<{ success?: boolean; error?: string }>(res)
+      if (result.error) {
+        throw new Error(result.error)
+      }
+    },
     getVersion: async () => '0.0.1',
     updater: {
       onUpdateAvailable: () => () => {},

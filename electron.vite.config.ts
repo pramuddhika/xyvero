@@ -18,7 +18,9 @@ import {
   deleteAccount,
   listTransactionTypes,
   listTransactions,
-  addTransaction
+  addTransaction,
+  updateTransaction,
+  deleteTransaction
 } from './src/main/database'
 
 function devDatabasePlugin(): Plugin {
@@ -284,6 +286,56 @@ function devDatabasePlugin(): Plugin {
               )
               res.setHeader('Content-Type', 'application/json')
               res.end(JSON.stringify({ timeStamp }))
+            } catch (err) {
+              res.statusCode = 500
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }))
+            }
+          })
+          return
+        }
+
+        if (pathname === '/api/updateTransaction' && req.method === 'POST') {
+          let body = ''
+          req.on('data', (chunk) => {
+            body += chunk
+          })
+          req.on('end', () => {
+            try {
+              const parsed = JSON.parse(body)
+              updateTransaction(
+                parsed.timeStamp,
+                parsed.transactionTime,
+                parsed.transactionTypeId,
+                parsed.toAccountId,
+                parsed.fromAccountId,
+                parsed.categoryId,
+                parsed.amount,
+                parsed.fees,
+                parsed.note
+              )
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ success: true }))
+            } catch (err) {
+              res.statusCode = 500
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }))
+            }
+          })
+          return
+        }
+
+        if (pathname === '/api/deleteTransaction' && req.method === 'POST') {
+          let body = ''
+          req.on('data', (chunk) => {
+            body += chunk
+          })
+          req.on('end', () => {
+            try {
+              const parsed = JSON.parse(body)
+              deleteTransaction(parsed.timeStamp)
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ success: true }))
             } catch (err) {
               res.statusCode = 500
               res.setHeader('Content-Type', 'application/json')

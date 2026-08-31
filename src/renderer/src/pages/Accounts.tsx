@@ -109,12 +109,35 @@ function Accounts(): React.JSX.Element {
         throw new Error('Please select a valid account type.')
       }
 
-      await window.api.addAccount(
+      const initialAmount =
+        data.accountAmount === '' || data.accountAmount === undefined
+          ? 0
+          : parseFloat(data.accountAmount)
+
+      const newAccountId = await window.api.addAccount(
         data.accountName.trim(),
         accountTypeId,
         data.accountIcon,
         data.accountColor
       )
+
+      // If an initial opening balance is provided (> 0), record an Income transaction
+      if (initialAmount > 0 && window.api?.addTransaction) {
+        const now = new Date()
+        const pad = (n: number): string => (n < 10 ? `0${n}` : `${n}`)
+        const txTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
+
+        await window.api.addTransaction(
+          txTime,
+          1, // Income
+          newAccountId,
+          null,
+          null,
+          initialAmount,
+          0,
+          'Account Opening'
+        )
+      }
 
       setIsModalOpen(false)
       await fetchData()

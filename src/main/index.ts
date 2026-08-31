@@ -20,7 +20,9 @@ import {
   deleteAccount,
   listTransactionTypes,
   listTransactions,
-  addTransaction
+  addTransaction,
+  updateTransaction,
+  deleteTransaction
 } from './database'
 
 const icon = nativeImage.createFromPath(iconPath)
@@ -193,6 +195,36 @@ app.whenReady().then(() => {
       )
     }
   )
+  ipcMain.handle(
+    'db:updateTransaction',
+    (
+      _,
+      timeStamp: string,
+      transactionTime: string,
+      transactionTypeId: number,
+      toAccountId: number,
+      fromAccountId: number | null | undefined,
+      categoryId: number | null | undefined,
+      amount: number,
+      fees: number | undefined,
+      note: string
+    ) => {
+      updateTransaction(
+        timeStamp,
+        transactionTime,
+        transactionTypeId,
+        toAccountId,
+        fromAccountId,
+        categoryId,
+        amount,
+        fees,
+        note
+      )
+    }
+  )
+  ipcMain.handle('db:deleteTransaction', (_, timeStamp: string) => {
+    deleteTransaction(timeStamp)
+  })
   ipcMain.handle('app:getVersion', () => app.getVersion())
 
   createWindow()
