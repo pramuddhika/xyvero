@@ -54,7 +54,6 @@ const api = {
   > => electronAPI.ipcRenderer.invoke('db:listCategories'),
   addCategory: (
     categoryName: string,
-    categoryAmount: number,
     categoryGroupId: number,
     categoryIcon: string,
     categoryColour: string
@@ -62,7 +61,6 @@ const api = {
     electronAPI.ipcRenderer.invoke(
       'db:addCategory',
       categoryName,
-      categoryAmount,
       categoryGroupId,
       categoryIcon,
       categoryColour
@@ -80,7 +78,6 @@ const api = {
   > => electronAPI.ipcRenderer.invoke('db:listAccounts'),
   addAccount: (
     accountName: string,
-    accountAmount: number,
     accountTypeId: number,
     accountIcon: string,
     accountColor: string
@@ -88,11 +85,27 @@ const api = {
     electronAPI.ipcRenderer.invoke(
       'db:addAccount',
       accountName,
-      accountAmount,
       accountTypeId,
       accountIcon,
       accountColor
     ),
+  updateAccount: (
+    accountId: number,
+    accountName: string,
+    accountTypeId: number,
+    accountIcon: string,
+    accountColor: string
+  ): Promise<void> =>
+    electronAPI.ipcRenderer.invoke(
+      'db:updateAccount',
+      accountId,
+      accountName,
+      accountTypeId,
+      accountIcon,
+      accountColor
+    ),
+  deleteAccount: (accountId: number): Promise<void> =>
+    electronAPI.ipcRenderer.invoke('db:deleteAccount', accountId),
   listTransactionTypes: (): Promise<
     Array<{
       transaction_type_id: number
@@ -133,6 +146,31 @@ const api = {
       fees,
       note
     ),
+  updateTransaction: (
+    timeStamp: string,
+    transactionTime: string,
+    transactionTypeId: number,
+    toAccountId: number,
+    fromAccountId: number | null | undefined,
+    categoryId: number | null | undefined,
+    amount: number,
+    fees: number = 0,
+    note: string
+  ): Promise<void> =>
+    electronAPI.ipcRenderer.invoke(
+      'db:updateTransaction',
+      timeStamp,
+      transactionTime,
+      transactionTypeId,
+      toAccountId,
+      fromAccountId,
+      categoryId,
+      amount,
+      fees,
+      note
+    ),
+  deleteTransaction: (timeStamp: string): Promise<void> =>
+    electronAPI.ipcRenderer.invoke('db:deleteTransaction', timeStamp),
   getVersion: (): Promise<string> => electronAPI.ipcRenderer.invoke('app:getVersion'),
   updater: {
     onUpdateAvailable: (

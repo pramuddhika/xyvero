@@ -25,6 +25,7 @@
 }
 
 :root {
+  color-scheme: dark;
   --color-background: var(--ev-c-black);
   --color-background-soft: var(--ev-c-black-soft);
   --color-background-mute: var(--ev-c-black-mute);
@@ -56,6 +57,7 @@
 }
 
 body[data-theme='light'] {
+  color-scheme: light;
   --color-background: #f3f7f8;
   --color-background-soft: #ffffff;
   --color-background-mute: #e7edf0;
@@ -83,6 +85,28 @@ body[data-theme='light'] {
   --theme-accent-border: rgba(54, 177, 118, 0.22);
   --theme-accent-soft: rgba(54, 177, 118, 0.12);
   --theme-accent-text: #163c28;
+}
+
+body[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+input[type='datetime-local'],
+input[type='date'],
+input[type='time'] {
+  color-scheme: dark;
+}
+
+body[data-theme='light'] input[type='datetime-local'],
+body[data-theme='light'] input[type='date'],
+body[data-theme='light'] input[type='time'] {
+  color-scheme: light;
+}
+
+body[data-theme='dark'] input[type='datetime-local'],
+body[data-theme='dark'] input[type='date'],
+body[data-theme='dark'] input[type='time'] {
+  color-scheme: dark;
 }
 
 *,

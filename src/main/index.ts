@@ -16,9 +16,13 @@ import {
   addCategory,
   listAccounts,
   addAccount,
+  updateAccount,
+  deleteAccount,
   listTransactionTypes,
   listTransactions,
-  addTransaction
+  addTransaction,
+  updateTransaction,
+  deleteTransaction
 } from './database'
 
 const icon = nativeImage.createFromPath(iconPath)
@@ -128,12 +132,11 @@ app.whenReady().then(() => {
     (
       _,
       categoryName: string,
-      categoryAmount: number,
       categoryGroupId: number,
       categoryIcon: string,
       categoryColour: string
     ) => {
-      return addCategory(categoryName, categoryAmount, categoryGroupId, categoryIcon, categoryColour)
+      return addCategory(categoryName, categoryGroupId, categoryIcon, categoryColour)
     }
   )
   ipcMain.handle('db:listAccounts', () => listAccounts())
@@ -142,14 +145,29 @@ app.whenReady().then(() => {
     (
       _,
       accountName: string,
-      accountAmount: number,
       accountTypeId: number,
       accountIcon: string,
       accountColor: string
     ) => {
-      return addAccount(accountName, accountAmount, accountTypeId, accountIcon, accountColor)
+      return addAccount(accountName, accountTypeId, accountIcon, accountColor)
     }
   )
+  ipcMain.handle(
+    'db:updateAccount',
+    (
+      _,
+      accountId: number,
+      accountName: string,
+      accountTypeId: number,
+      accountIcon: string,
+      accountColor: string
+    ) => {
+      updateAccount(accountId, accountName, accountTypeId, accountIcon, accountColor)
+    }
+  )
+  ipcMain.handle('db:deleteAccount', (_, accountId: number) => {
+    deleteAccount(accountId)
+  })
   ipcMain.handle('db:listTransactionTypes', () => listTransactionTypes())
   ipcMain.handle('db:listTransactions', () => listTransactions())
   ipcMain.handle(
@@ -177,6 +195,36 @@ app.whenReady().then(() => {
       )
     }
   )
+  ipcMain.handle(
+    'db:updateTransaction',
+    (
+      _,
+      timeStamp: string,
+      transactionTime: string,
+      transactionTypeId: number,
+      toAccountId: number,
+      fromAccountId: number | null | undefined,
+      categoryId: number | null | undefined,
+      amount: number,
+      fees: number | undefined,
+      note: string
+    ) => {
+      updateTransaction(
+        timeStamp,
+        transactionTime,
+        transactionTypeId,
+        toAccountId,
+        fromAccountId,
+        categoryId,
+        amount,
+        fees,
+        note
+      )
+    }
+  )
+  ipcMain.handle('db:deleteTransaction', (_, timeStamp: string) => {
+    deleteTransaction(timeStamp)
+  })
   ipcMain.handle('app:getVersion', () => app.getVersion())
 
   createWindow()

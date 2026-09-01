@@ -48,7 +48,6 @@ if (typeof window !== 'undefined' && !window.api) {
     },
     addAccount: async (
       accountName: string,
-      accountAmount: number,
       accountTypeId: number,
       accountIcon: string,
       accountColor: string
@@ -58,7 +57,6 @@ if (typeof window !== 'undefined' && !window.api) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           accountName,
-          accountAmount,
           accountTypeId,
           accountIcon,
           accountColor
@@ -73,6 +71,40 @@ if (typeof window !== 'undefined' && !window.api) {
       }
       return result.accountId
     },
+    updateAccount: async (
+      accountId: number,
+      accountName: string,
+      accountTypeId: number,
+      accountIcon: string,
+      accountColor: string
+    ): Promise<void> => {
+      const res = await fetch('/api/updateAccount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountId,
+          accountName,
+          accountTypeId,
+          accountIcon,
+          accountColor
+        })
+      })
+      const result = await parseJson<{ success?: boolean; error?: string }>(res)
+      if (result.error) {
+        throw new Error(result.error)
+      }
+    },
+    deleteAccount: async (accountId: number): Promise<void> => {
+      const res = await fetch('/api/deleteAccount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountId })
+      })
+      const result = await parseJson<{ success?: boolean; error?: string }>(res)
+      if (result.error) {
+        throw new Error(result.error)
+      }
+    },
     listCategoryTypes: async () => {
       const res = await fetch('/api/listCategoryTypes')
       return parseJson(res)
@@ -83,7 +115,6 @@ if (typeof window !== 'undefined' && !window.api) {
     },
     addCategory: async (
       categoryName: string,
-      categoryAmount: number,
       categoryGroupId: number,
       categoryIcon: string,
       categoryColour: string
@@ -93,7 +124,6 @@ if (typeof window !== 'undefined' && !window.api) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           categoryName,
-          categoryAmount,
           categoryGroupId,
           categoryIcon,
           categoryColour
@@ -148,6 +178,48 @@ if (typeof window !== 'undefined' && !window.api) {
         throw new Error('Failed to save transaction: invalid server response')
       }
       return result.timeStamp
+    },
+    updateTransaction: async (
+      timeStamp: string,
+      transactionTime: string,
+      transactionTypeId: number,
+      toAccountId: number,
+      fromAccountId: number | null | undefined,
+      categoryId: number | null | undefined,
+      amount: number,
+      fees: number = 0,
+      note: string
+    ): Promise<void> => {
+      const res = await fetch('/api/updateTransaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          timeStamp,
+          transactionTime,
+          transactionTypeId,
+          toAccountId,
+          fromAccountId,
+          categoryId,
+          amount,
+          fees,
+          note
+        })
+      })
+      const result = await parseJson<{ success?: boolean; error?: string }>(res)
+      if (result.error) {
+        throw new Error(result.error)
+      }
+    },
+    deleteTransaction: async (timeStamp: string): Promise<void> => {
+      const res = await fetch('/api/deleteTransaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timeStamp })
+      })
+      const result = await parseJson<{ success?: boolean; error?: string }>(res)
+      if (result.error) {
+        throw new Error(result.error)
+      }
     },
     getVersion: async () => '0.0.1',
     updater: {

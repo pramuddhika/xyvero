@@ -85,7 +85,6 @@ function createTables(database: Database.Database): void {
     CREATE TABLE IF NOT EXISTS category (
       category_id INTEGER PRIMARY KEY,
       category_name VARCHAR(100) NOT NULL,
-      category_amount REAL NOT NULL DEFAULT 0.00,
       category_group_id INTEGER NOT NULL REFERENCES categoryTypes(category_id),
       category_icon VARCHAR(100) NOT NULL DEFAULT 'circle',
       category_colour VARCHAR(7) NOT NULL DEFAULT '#6366f1',
@@ -96,7 +95,6 @@ function createTables(database: Database.Database): void {
     CREATE TABLE IF NOT EXISTS accounts (
       account_id INTEGER PRIMARY KEY,
       account_name VARCHAR(100) NOT NULL,
-      account_amount REAL NOT NULL DEFAULT 0.00,
       account_type_id INTEGER NOT NULL REFERENCES accountTypes(account_type_id),
       account_color VARCHAR(7) NOT NULL DEFAULT '#6366f1',
       account_icon VARCHAR(100) NOT NULL DEFAULT 'circle',
@@ -149,35 +147,33 @@ function createTables(database: Database.Database): void {
     INSERT OR IGNORE INTO category (
       category_id,
       category_name,
-      category_amount,
       category_group_id,
       category_icon,
       category_colour,
       is_active
     )
     VALUES
-      (1, 'Salary', 0.00, 1, 'salary', '#12B886', 1),
-      (2, 'Freelance', 0.00, 1, 'freelance', '#339AF0', 1),
-      (3, 'Investment', 0.00, 1, 'investment', '#845EF7', 1),
-      (4, 'Other Income', 0.00, 1, 'other', '#FCC419', 1),
-      (5, 'Food', 0.00, 2, 'food', '#FA5252', 1),
-      (6, 'Transport', 0.00, 2, 'transport', '#FD7E14', 1),
-      (7, 'Entertainment', 0.00, 2, 'entertainment', '#E64980', 1),
-      (8, 'Other Expense', 0.00, 2, 'other', '#868E96', 1);
+      (1, 'Salary', 1, 'salary', '#12B886', 1),
+      (2, 'Freelance', 1, 'freelance', '#339AF0', 1),
+      (3, 'Investment', 1, 'investment', '#845EF7', 1),
+      (4, 'Other Income', 1, 'other', '#FCC419', 1),
+      (5, 'Food', 2, 'food', '#FA5252', 1),
+      (6, 'Transport', 2, 'transport', '#FD7E14', 1),
+      (7, 'Entertainment', 2, 'entertainment', '#E64980', 1),
+      (8, 'Other Expense', 2, 'other', '#868E96', 1);
 
     INSERT OR IGNORE INTO accounts (
       account_id,
       account_name,
-      account_amount,
       account_type_id,
       account_color,
       account_icon,
       is_active
     )
     VALUES
-      (1, 'Wallet', 0.00, 1, '#12B886', 'wallet', 1),
-      (2, 'Bank Account', 0.00, 2, '#339AF0', 'bank', 1),
-      (3, 'Piggy Bank', 0.00, 3, '#F783AC', 'savings', 1);
+      (1, 'Wallet', 1, '#12B886', 'wallet', 1),
+      (2, 'Bank Account', 2, '#339AF0', 'bank', 1),
+      (3, 'Piggy Bank', 3, '#F783AC', 'savings', 1);
 
     INSERT OR IGNORE INTO transactionTypes (transaction_type_id, transaction_type_name)
     VALUES
@@ -354,30 +350,110 @@ export function listCategoryTypes(): CategoryTypeRecord[] {
     .all() as CategoryTypeRecord[]
 }
 
+export function getAccountingPeriodRange(
+  monthStartDay: number = 1,
+  refDate: Date = new Date()
+): { startStr: string; endStr: string; startDate: Date; endDate: Date } {
+  const currentYear = refDate.getFullYear()
+  const currentMonth = refDate.getMonth()
+  const currentDate = refDate.getDate()
+
+  let startYear = currentYear
+  let startMonth = currentMonth
+
+  if (currentDate < monthStartDay) {
+    startMonth = currentMonth - 1
+    if (startMonth < 0) {
+      startMonth = 11
+      startYear -= 1
+    }
+  }
+
+  // Days in start month
+  const daysInStartMonth = new Date(startYear, startMonth + 1, 0).getDate()
+  const actualStartDay = Math.min(monthStartDay, daysInStartMonth)
+
+  const startDate = new Date(startYear, startMonth, actualStartDay, 0, 0, 0, 0)
+
+  let endYear = startYear
+  let endMonth = startMonth + 1
+  if (endMonth > 11) {
+    endMonth = 0
+    endYear += 1
+  }
+
+  const daysInEndMonth = new Date(endYear, endMonth + 1, 0).getDate()
+  const targetEndDay = monthStartDay - 1
+
+  let actualEndDay: number
+  let actualEndMonth: number
+  let actualEndYear: number
+
+  if (targetEndDay <= 0) {
+    actualEndDay = daysInStartMonth
+    actualEndMonth = startMonth
+    actualEndYear = startYear
+  } else {
+    actualEndDay = Math.min(targetEndDay, daysInEndMonth)
+    actualEndMonth = endMonth
+    actualEndYear = endYear
+  }
+
+  const endDate = new Date(actualEndYear, actualEndMonth, actualEndDay, 23, 59, 59, 999)
+
+  const pad = (n: number): string => (n < 10 ? `0${n}` : `${n}`)
+  const startStr = `${startDate.getFullYear()}-${pad(startDate.getMonth() + 1)}-${pad(startDate.getDate())}`
+  const endStr = `${endDate.getFullYear()}-${pad(endDate.getMonth() + 1)}-${pad(endDate.getDate())}T23:59:59.999`
+
+  return { startStr, endStr, startDate, endDate }
+}
+
+export function getMonthStartDay(): number {
+  const config = getConfigurationValue('MONTH_START_DATE')
+  if (config && config.configuration_value) {
+    const parsed = parseInt(config.configuration_value, 10)
+    if (!isNaN(parsed) && parsed >= 1 && parsed <= 31) {
+      return parsed
+    }
+  }
+  return 1
+}
+
 export function listCategories(): CategoryRecord[] {
   const database = getDatabase()
+  const monthStartDay = getMonthStartDay()
+  const { startStr, endStr } = getAccountingPeriodRange(monthStartDay)
+
   return database
     .prepare(
       `
         SELECT
-          category_id,
-          category_name,
-          category_amount,
-          category_group_id,
-          category_icon,
-          category_colour,
-          is_active
-        FROM category
-        WHERE is_active = 1
-        ORDER BY category_id ASC
+          c.category_id,
+          c.category_name,
+          c.category_group_id,
+          c.category_icon,
+          c.category_colour,
+          c.is_active,
+          ROUND(
+            COALESCE((
+              SELECT SUM(t.amount)
+              FROM transactions t
+              WHERE t.category_id = c.category_id
+                AND t.transaction_time >= ?
+                AND t.transaction_time <= ?
+            ), 0.00),
+            2
+          ) AS category_amount
+        FROM category c
+        WHERE c.is_active = 1
+        ORDER BY c.category_id ASC
       `
     )
-    .all() as CategoryRecord[]
+    .all(startStr, endStr) as CategoryRecord[]
 }
 
 export function addCategory(
   categoryName: string,
-  categoryAmount: number,
   categoryGroupId: number,
   categoryIcon: string,
   categoryColour: string,
@@ -407,48 +483,76 @@ export function addCategory(
     throw new Error(`An active category named "${trimmedName}" already exists.`)
   }
 
-  const cleanAmount = parseFloat(Number(categoryAmount || 0).toFixed(2))
   const result = database
     .prepare(
       `
         INSERT INTO category (
           category_name,
-          category_amount,
           category_group_id,
           category_icon,
           category_colour,
           is_active
-        ) VALUES (?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?)
       `
     )
-    .run(trimmedName, cleanAmount, categoryGroupId, categoryIcon, categoryColour, isActive ? 1 : 0)
+    .run(trimmedName, categoryGroupId, categoryIcon, categoryColour, isActive ? 1 : 0)
   return result.lastInsertRowid as number
 }
 
 export function listAccounts(): AccountRecord[] {
   const database = getDatabase()
+  const monthStartDay = getMonthStartDay()
+  const { startStr, endStr } = getAccountingPeriodRange(monthStartDay)
+
   return database
     .prepare(
       `
         SELECT
-          account_id,
-          account_name,
-          account_amount,
-          account_type_id,
-          account_color,
-          account_icon,
-          is_active
-        FROM accounts
-        WHERE is_active = 1
-        ORDER BY account_id ASC
+          a.account_id,
+          a.account_name,
+          a.account_type_id,
+          a.account_color,
+          a.account_icon,
+          a.is_active,
+          ROUND(
+            COALESCE((
+              SELECT SUM(t.amount)
+              FROM transactions t
+              WHERE t.to_account_id = a.account_id
+                AND t.transaction_type_id IN (1, 3)
+                AND t.transaction_time >= ?
+                AND t.transaction_time <= ?
+            ), 0.00)
+            -
+            COALESCE((
+              SELECT SUM(t.amount)
+              FROM transactions t
+              WHERE t.to_account_id = a.account_id
+                AND t.transaction_type_id = 2
+                AND t.transaction_time >= ?
+                AND t.transaction_time <= ?
+            ), 0.00)
+            -
+            COALESCE((
+              SELECT SUM(t.amount + COALESCE(t.fees, 0))
+              FROM transactions t
+              WHERE t.from_account_id = a.account_id
+                AND t.transaction_type_id = 3
+                AND t.transaction_time >= ?
+                AND t.transaction_time <= ?
+            ), 0.00),
+            2
+          ) AS account_amount
+        FROM accounts a
+        WHERE a.is_active = 1
+        ORDER BY a.account_id ASC
       `
     )
-    .all() as AccountRecord[]
+    .all(startStr, endStr, startStr, endStr, startStr, endStr) as AccountRecord[]
 }
 
 export function addAccount(
   accountName: string,
-  accountAmount: number,
   accountTypeId: number,
   accountIcon: string,
   accountColor: string,
@@ -478,22 +582,79 @@ export function addAccount(
     throw new Error(`An active account named "${trimmedName}" already exists.`)
   }
 
-  const cleanAmount = parseFloat(Number(accountAmount || 0).toFixed(2))
   const result = database
     .prepare(
       `
         INSERT INTO accounts (
           account_name,
-          account_amount,
           account_type_id,
           account_icon,
           account_color,
           is_active
-        ) VALUES (?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?)
       `
     )
-    .run(trimmedName, cleanAmount, accountTypeId, accountIcon, accountColor, isActive ? 1 : 0)
+    .run(trimmedName, accountTypeId, accountIcon, accountColor, isActive ? 1 : 0)
   return result.lastInsertRowid as number
+}
+
+export function updateAccount(
+  accountId: number,
+  accountName: string,
+  accountTypeId: number,
+  accountIcon: string,
+  accountColor: string
+): void {
+  const database = getDatabase()
+  const trimmedName = accountName.trim()
+  if (!trimmedName) {
+    throw new Error('Account name cannot be empty.')
+  }
+  if (trimmedName.length > 50) {
+    throw new Error('Account name cannot exceed 50 characters.')
+  }
+
+  const existing = database
+    .prepare(
+      `
+        SELECT account_id
+        FROM accounts
+        WHERE LOWER(account_name) = LOWER(?) AND is_active = 1 AND account_id != ?
+        LIMIT 1
+      `
+    )
+    .get(trimmedName, accountId)
+
+  if (existing) {
+    throw new Error(`An active account named "${trimmedName}" already exists.`)
+  }
+
+  database
+    .prepare(
+      `
+        UPDATE accounts
+        SET
+          account_name = ?,
+          account_type_id = ?,
+          account_icon = ?,
+          account_color = ?
+        WHERE account_id = ?
+      `
+    )
+    .run(trimmedName, accountTypeId, accountIcon, accountColor, accountId)
+}
+
+export function deleteAccount(accountId: number): void {
+  const database = getDatabase()
+  database
+    .prepare(
+      `
+        UPDATE accounts
+        SET is_active = 0
+        WHERE account_id = ?
+      `
+    )
+    .run(accountId)
 }
 
 export type TransactionTypeRecord = {
@@ -586,57 +747,112 @@ export function addTransaction(
   const cleanAmount = parseFloat(Number(amount).toFixed(2))
   const cleanFees = parseFloat(Number(fees || 0).toFixed(2))
 
-  const insertTx = database.transaction(() => {
-    database
-      .prepare(
-        `
-          INSERT INTO transactions (
-            time_stamp,
-            transaction_time,
-            transaction_type_id,
-            to_account_id,
-            from_account_id,
-            category_id,
-            amount,
-            fees,
-            note
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `
-      )
-      .run(
-        timeStamp,
-        transactionTime,
-        transactionTypeId,
-        toAccountId,
-        finalFromAccountId,
-        finalCategoryId,
-        cleanAmount,
-        cleanFees,
-        trimmedNote
-      )
+  database
+    .prepare(
+      `
+        INSERT INTO transactions (
+          time_stamp,
+          transaction_time,
+          transaction_type_id,
+          to_account_id,
+          from_account_id,
+          category_id,
+          amount,
+          fees,
+          note
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `
+    )
+    .run(
+      timeStamp,
+      transactionTime,
+      transactionTypeId,
+      toAccountId,
+      finalFromAccountId,
+      finalCategoryId,
+      cleanAmount,
+      cleanFees,
+      trimmedNote
+    )
 
-    // Update account balances:
-    // 1: Income -> Increase to_account_id balance
-    // 2: Expense -> Decrease to_account_id balance
-    // 3: Transfer -> Decrease from_account_id balance by (amount + fees) and increase to_account_id balance by amount
-    if (transactionTypeId === 1) {
-      database
-        .prepare(`UPDATE accounts SET account_amount = account_amount + ? WHERE account_id = ?`)
-        .run(cleanAmount, toAccountId)
-    } else if (transactionTypeId === 2) {
-      database
-        .prepare(`UPDATE accounts SET account_amount = account_amount - ? WHERE account_id = ?`)
-        .run(cleanAmount, toAccountId)
-    } else if (transactionTypeId === 3 && finalFromAccountId) {
-      database
-        .prepare(`UPDATE accounts SET account_amount = account_amount - ? WHERE account_id = ?`)
-        .run(cleanAmount + cleanFees, finalFromAccountId)
-      database
-        .prepare(`UPDATE accounts SET account_amount = account_amount + ? WHERE account_id = ?`)
-        .run(cleanAmount, toAccountId)
-    }
-  })
-
-  insertTx()
   return timeStamp
+}
+
+export function updateTransaction(
+  timeStamp: string,
+  transactionTime: string,
+  transactionTypeId: number,
+  toAccountId: number,
+  fromAccountId: number | null | undefined,
+  categoryId: number | null | undefined,
+  amount: number,
+  fees: number = 0,
+  note: string
+): void {
+  const database = getDatabase()
+  const trimmedNote = note.trim()
+  if (!trimmedNote) {
+    throw new Error('Transaction note is required.')
+  }
+  if (!toAccountId) {
+    throw new Error('To Account is required.')
+  }
+  if (!amount || amount <= 0) {
+    throw new Error('Amount must be greater than 0.')
+  }
+
+  const finalFromAccountId =
+    transactionTypeId === 3 && fromAccountId ? Number(fromAccountId) : null
+  const finalCategoryId =
+    transactionTypeId !== 3 && categoryId ? Number(categoryId) : null
+
+  if (transactionTypeId === 3 && !finalFromAccountId) {
+    throw new Error('From Account is required for Transfer transactions.')
+  }
+
+  const cleanAmount = parseFloat(Number(amount).toFixed(2))
+  const cleanFees = parseFloat(Number(fees || 0).toFixed(2))
+
+  database
+    .prepare(
+      `
+        UPDATE transactions
+        SET
+          transaction_time = ?,
+          transaction_type_id = ?,
+          to_account_id = ?,
+          from_account_id = ?,
+          category_id = ?,
+          amount = ?,
+          fees = ?,
+          note = ?
+        WHERE time_stamp = ?
+      `
+    )
+    .run(
+      transactionTime,
+      transactionTypeId,
+      toAccountId,
+      finalFromAccountId,
+      finalCategoryId,
+      cleanAmount,
+      cleanFees,
+      trimmedNote,
+      timeStamp
+    )
+}
+
+export function deleteTransaction(timeStamp: string): void {
+  const database = getDatabase()
+  if (!timeStamp) {
+    throw new Error('Transaction timestamp is required.')
+  }
+  database
+    .prepare(
+      `
+        DELETE FROM transactions
+        WHERE time_stamp = ?
+      `
+    )
+    .run(timeStamp)
 }

@@ -46,8 +46,10 @@ function Layout(): React.JSX.Element {
 
   useEffect(() => {
     document.body.dataset.theme = themeMode
+    document.documentElement.style.colorScheme = themeMode
     return () => {
       delete document.body.dataset.theme
+      document.documentElement.style.colorScheme = ''
     }
   }, [themeMode])
 

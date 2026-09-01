@@ -14,9 +14,13 @@ import {
   addCategory,
   listAccounts,
   addAccount,
+  updateAccount,
+  deleteAccount,
   listTransactionTypes,
   listTransactions,
-  addTransaction
+  addTransaction,
+  updateTransaction,
+  deleteTransaction
 } from './src/main/database'
 
 function devDatabasePlugin(): Plugin {
@@ -137,7 +141,6 @@ function devDatabasePlugin(): Plugin {
               const parsed = JSON.parse(body)
               const categoryId = addCategory(
                 parsed.categoryName,
-                parsed.categoryAmount,
                 parsed.categoryGroupId,
                 parsed.categoryIcon,
                 parsed.categoryColour
@@ -176,13 +179,58 @@ function devDatabasePlugin(): Plugin {
               const parsed = JSON.parse(body)
               const accountId = addAccount(
                 parsed.accountName,
-                parsed.accountAmount,
                 parsed.accountTypeId,
                 parsed.accountIcon,
                 parsed.accountColor
               )
               res.setHeader('Content-Type', 'application/json')
               res.end(JSON.stringify({ accountId }))
+            } catch (err) {
+              res.statusCode = 500
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }))
+            }
+          })
+          return
+        }
+
+        if (pathname === '/api/updateAccount' && req.method === 'POST') {
+          let body = ''
+          req.on('data', (chunk) => {
+            body += chunk
+          })
+          req.on('end', () => {
+            try {
+              const parsed = JSON.parse(body)
+              updateAccount(
+                parsed.accountId,
+                parsed.accountName,
+                parsed.accountTypeId,
+                parsed.accountIcon,
+                parsed.accountColor
+              )
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ success: true }))
+            } catch (err) {
+              res.statusCode = 500
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }))
+            }
+          })
+          return
+        }
+
+        if (pathname === '/api/deleteAccount' && req.method === 'POST') {
+          let body = ''
+          req.on('data', (chunk) => {
+            body += chunk
+          })
+          req.on('end', () => {
+            try {
+              const parsed = JSON.parse(body)
+              deleteAccount(parsed.accountId)
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ success: true }))
             } catch (err) {
               res.statusCode = 500
               res.setHeader('Content-Type', 'application/json')
@@ -238,6 +286,56 @@ function devDatabasePlugin(): Plugin {
               )
               res.setHeader('Content-Type', 'application/json')
               res.end(JSON.stringify({ timeStamp }))
+            } catch (err) {
+              res.statusCode = 500
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }))
+            }
+          })
+          return
+        }
+
+        if (pathname === '/api/updateTransaction' && req.method === 'POST') {
+          let body = ''
+          req.on('data', (chunk) => {
+            body += chunk
+          })
+          req.on('end', () => {
+            try {
+              const parsed = JSON.parse(body)
+              updateTransaction(
+                parsed.timeStamp,
+                parsed.transactionTime,
+                parsed.transactionTypeId,
+                parsed.toAccountId,
+                parsed.fromAccountId,
+                parsed.categoryId,
+                parsed.amount,
+                parsed.fees,
+                parsed.note
+              )
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ success: true }))
+            } catch (err) {
+              res.statusCode = 500
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }))
+            }
+          })
+          return
+        }
+
+        if (pathname === '/api/deleteTransaction' && req.method === 'POST') {
+          let body = ''
+          req.on('data', (chunk) => {
+            body += chunk
+          })
+          req.on('end', () => {
+            try {
+              const parsed = JSON.parse(body)
+              deleteTransaction(parsed.timeStamp)
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ success: true }))
             } catch (err) {
               res.statusCode = 500
               res.setHeader('Content-Type', 'application/json')
