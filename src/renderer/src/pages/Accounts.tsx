@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react'
 import { Plus, Search, TrendingUp, TrendingDown, Wallet, X } from 'lucide-react'
 import { Icon } from '../components/Icon'
-import { getCurrencySymbol } from '../utils/currency'
+import { getCurrencySymbol, unformatAmount } from '../utils/currency'
 import AccountDetail from '../components/AccountDetail'
 import AccountFormModal, { AccountFormValues } from '../components/AccountFormModal'
 import type { AccountTypeRecord, AccountRecord, CategoryRecord } from '../types'
@@ -109,10 +109,7 @@ function Accounts(): React.JSX.Element {
         throw new Error('Please select a valid account type.')
       }
 
-      const initialAmount =
-        data.accountAmount === '' || data.accountAmount === undefined
-          ? 0
-          : parseFloat(data.accountAmount)
+      const initialAmount = unformatAmount(data.accountAmount)
 
       const newAccountId = await window.api.addAccount(
         data.accountName.trim(),
@@ -121,22 +118,35 @@ function Accounts(): React.JSX.Element {
         data.accountColor
       )
 
-      // If an initial opening balance is provided (> 0), record an Income transaction
-      if (initialAmount > 0 && window.api?.addTransaction) {
+      // If an initial opening balance is provided (!== 0), record an Income or Expense transaction
+      if (initialAmount !== 0 && !isNaN(initialAmount) && window.api?.addTransaction) {
         const now = new Date()
         const pad = (n: number): string => (n < 10 ? `0${n}` : `${n}`)
         const txTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
 
-        await window.api.addTransaction(
-          txTime,
-          1, // Income
-          newAccountId,
-          null,
-          null,
-          initialAmount,
-          0,
-          'Account Opening'
-        )
+        if (initialAmount > 0) {
+          await window.api.addTransaction(
+            txTime,
+            1, // Income
+            newAccountId,
+            null,
+            null,
+            initialAmount,
+            0,
+            'Account Opening'
+          )
+        } else {
+          await window.api.addTransaction(
+            txTime,
+            2, // Expense (for liabilities / negative balance)
+            newAccountId,
+            null,
+            null,
+            Math.abs(initialAmount),
+            0,
+            'Account Opening'
+          )
+        }
       }
 
       setIsModalOpen(false)

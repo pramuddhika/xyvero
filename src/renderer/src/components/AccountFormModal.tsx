@@ -5,6 +5,11 @@ import FormModal from './FormModal'
 import IconPicker from './IconPicker'
 import ColorPicker from './ColorPicker'
 import { COLOR_PALETTE } from './Color'
+import {
+  formatAmountWithCommas,
+  unformatAmount,
+  handleFormattedAmountInput
+} from '../utils/currency'
 import type { AccountTypeRecord } from '../types'
 
 export interface AccountFormValues {
@@ -48,7 +53,7 @@ export default function AccountFormModal({
   } = useForm<AccountFormValues>({
     defaultValues: {
       accountName: initialValues?.accountName || '',
-      accountAmount: initialValues?.accountAmount || '0.00',
+      accountAmount: formatAmountWithCommas(initialValues?.accountAmount || '0.00', true),
       accountTypeId: initialValues?.accountTypeId || accountTypes[0]?.account_type_id.toString() || '1',
       accountIcon: initialValues?.accountIcon || 'wallet',
       accountColor: initialValues?.accountColor || COLOR_PALETTE[0] || '#6366f1'
@@ -60,7 +65,7 @@ export default function AccountFormModal({
     if (isOpen) {
       reset({
         accountName: initialValues?.accountName || '',
-        accountAmount: initialValues?.accountAmount || '0.00',
+        accountAmount: formatAmountWithCommas(initialValues?.accountAmount || '0.00', true),
         accountTypeId:
           initialValues?.accountTypeId || accountTypes[0]?.account_type_id.toString() || '1',
         accountIcon: initialValues?.accountIcon || 'wallet',
@@ -136,24 +141,41 @@ export default function AccountFormModal({
           <span className="text-[11px] font-normal italic lowercase tracking-normal text-[var(--theme-text-muted)]">
             {mode === 'edit'
               ? '(adjusting creates an Income/Expense record)'
-              : "(records an 'Account Opening' income transaction)"}
+              : '(mark with - for liabilities)'}
           </span>
         </label>
         <div className="flex items-stretch rounded-xl border border-[var(--theme-border-soft)] bg-[var(--theme-control-bg)] overflow-hidden focus-within:border-emerald-500/50 transition-colors">
-          <span className="px-3.5 py-2.5 bg-[var(--theme-surface-strong)] text-sm font-semibold border-r border-[var(--theme-border-soft)] text-[var(--theme-text-muted)] min-w-[54px] flex items-center justify-center font-mono">
+          <span className="px-3.5 py-2.5 bg-[var(--theme-surface-strong)] text-sm font-semibold border-r border-[var(--theme-border-soft)] text-[var(--theme-text-muted)] min-w-[54px] flex items-center justify-center font-mono select-none">
             {currencySymbol || currencyType}
           </span>
           <input
-            type="number"
-            step="0.01"
+            type="text"
+            inputMode="decimal"
             placeholder="0.00"
+            autoComplete="off"
+            value={watch('accountAmount') ?? ''}
+            onChange={(e) => {
+              handleFormattedAmountInput(
+                e,
+                (val) => setValue('accountAmount', val, { shouldValidate: true }),
+                true
+              )
+            }}
+            onBlur={() => {
+              const current = watch('accountAmount')
+              if (!current || current === '-' || current === '.') {
+                setValue('accountAmount', '0.00')
+              } else {
+                const num = unformatAmount(current)
+                setValue('accountAmount', formatAmountWithCommas(num.toFixed(2), true))
+              }
+            }}
             onKeyDown={(e) => {
               if (e.key === '+' || e.key === 'e' || e.key === 'E') {
                 e.preventDefault()
               }
             }}
-            {...register('accountAmount')}
-            className="flex-1 px-3.5 py-2.5 text-sm bg-transparent border-0 text-[var(--theme-text-strong)] focus:outline-none font-mono no-spinners"
+            className="flex-1 px-3.5 py-2.5 text-sm bg-transparent border-0 text-[var(--theme-text-strong)] focus:outline-none font-mono"
           />
         </div>
         {errors.accountAmount && (

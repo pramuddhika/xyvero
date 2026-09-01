@@ -8,7 +8,8 @@ import {
   Wallet,
   Pencil,
   Trash2,
-  ReceiptText
+  ReceiptText,
+  Plus
 } from 'lucide-react'
 import { Icon } from './Icon'
 import TransactionItem from './TransactionItem'
@@ -16,7 +17,7 @@ import TransactionDrawer, { TransactionFormData } from './TransactionDrawer'
 import AccountFormModal, { AccountFormValues } from './AccountFormModal'
 import ConfirmModal from './ConfirmModal'
 import { getAccountingPeriod, formatPeriodDateRange, formatDayHeader } from '../utils/date'
-import { getCurrencySymbol } from '../utils/currency'
+import { getCurrencySymbol, unformatAmount } from '../utils/currency'
 import type { AccountRecord, AccountTypeRecord, CategoryRecord, TransactionRecord } from '../types'
 
 interface AccountDetailProps {
@@ -191,10 +192,7 @@ export default function AccountDetail({
         throw new Error('Please select a valid account type.')
       }
 
-      const newAmount =
-        data.accountAmount === '' || data.accountAmount === undefined
-          ? 0
-          : parseFloat(data.accountAmount)
+      const newAmount = unformatAmount(data.accountAmount)
       if (isNaN(newAmount)) {
         throw new Error('Please enter a valid amount.')
       }
@@ -278,22 +276,38 @@ export default function AccountDetail({
     }
   }
 
-  // Handle saving an edited transaction
-  const handleSaveEditedTransaction = async (data: TransactionFormData): Promise<void> => {
+  // Handle saving a new or edited transaction
+  const handleSaveTransaction = async (data: TransactionFormData): Promise<void> => {
     try {
-      if (!data.timeStamp) return
-      if (window.api?.updateTransaction) {
-        await window.api.updateTransaction(
-          data.timeStamp,
-          data.transactionTime,
-          data.transactionTypeId,
-          data.toAccountId,
-          data.fromAccountId,
-          data.categoryId,
-          data.amount,
-          data.fees,
-          data.note
-        )
+      if (data.timeStamp) {
+        // Edit existing transaction
+        if (window.api?.updateTransaction) {
+          await window.api.updateTransaction(
+            data.timeStamp,
+            data.transactionTime,
+            data.transactionTypeId,
+            data.toAccountId,
+            data.fromAccountId,
+            data.categoryId,
+            data.amount,
+            data.fees,
+            data.note
+          )
+        }
+      } else {
+        // Create new transaction
+        if (window.api?.addTransaction) {
+          await window.api.addTransaction(
+            data.transactionTime,
+            data.transactionTypeId,
+            data.toAccountId,
+            data.fromAccountId,
+            data.categoryId,
+            data.amount,
+            data.fees,
+            data.note
+          )
+        }
       }
       setIsTransactionDrawerOpen(false)
       setEditingTransaction(null)
@@ -302,7 +316,7 @@ export default function AccountDetail({
         await onAccountUpdated()
       }
     } catch (err) {
-      console.error('Failed to update transaction:', err)
+      console.error('Failed to save transaction:', err)
     }
   }
 
@@ -382,17 +396,33 @@ export default function AccountDetail({
           </div>
         </div>
 
-        {/* Month Cycle Badge */}
-        <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-[var(--theme-surface-strong)] border border-[var(--theme-border-soft)] shadow-2xs self-start sm:self-center">
-          <Calendar size={16} className="text-emerald-500 shrink-0" />
-          <div className="flex flex-col">
-            <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--theme-text-muted)]">
-              Accounting Period
-            </span>
-            <span className="text-xs font-semibold text-[var(--theme-text-strong)] font-mono">
-              {formatPeriodDateRange(startDate, endDate)}
-            </span>
+        {/* Right side actions: Accounting Period badge & Add Transaction button */}
+        <div className="flex flex-wrap items-center gap-3 self-start sm:self-center">
+          {/* Month Cycle Badge */}
+          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-[var(--theme-surface-strong)] border border-[var(--theme-border-soft)] shadow-2xs">
+            <Calendar size={16} className="text-emerald-500 shrink-0" />
+            <div className="flex flex-col">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-[var(--theme-text-muted)]">
+                Accounting Period
+              </span>
+              <span className="text-xs font-semibold text-[var(--theme-text-strong)] font-mono">
+                {formatPeriodDateRange(startDate, endDate)}
+              </span>
+            </div>
           </div>
+
+          {/* Add Transaction Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setEditingTransaction(null)
+              setIsTransactionDrawerOpen(true)
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all cursor-pointer shadow-sm hover:scale-[1.02] active:scale-[0.98] shrink-0"
+          >
+            <Plus size={16} strokeWidth={2.5} />
+            <span>Add Transaction</span>
+          </button>
         </div>
       </div>
 
@@ -487,6 +517,17 @@ export default function AccountDetail({
               There are no transactions recorded for {account.account_name} in the period from{' '}
               {formatPeriodDateRange(startDate, endDate)}.
             </p>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingTransaction(null)
+                setIsTransactionDrawerOpen(true)
+              }}
+              className="mt-4 flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all cursor-pointer shadow-xs hover:scale-105 active:scale-95"
+            >
+              <Plus size={15} strokeWidth={2.5} />
+              <span>Add Transaction</span>
+            </button>
           </div>
         ) : (
           /* Day Groups */
@@ -586,11 +627,13 @@ export default function AccountDetail({
         onConfirm={handleDeleteAccount}
       />
 
-      {/* TransactionDrawer in 'edit' mode for editing selected transaction */}
+      {/* TransactionDrawer for creating or editing transactions for this specific account */}
       <TransactionDrawer
         isOpen={isTransactionDrawerOpen}
-        mode="edit"
+        mode={editingTransaction ? 'edit' : 'create'}
         initialTransaction={editingTransaction}
+        defaultAccountId={account.account_id}
+        lockAccount={true}
         accounts={accounts}
         categories={categories}
         currencySymbol={currencySymbol}
@@ -599,7 +642,7 @@ export default function AccountDetail({
           setIsTransactionDrawerOpen(false)
           setEditingTransaction(null)
         }}
-        onSave={handleSaveEditedTransaction}
+        onSave={handleSaveTransaction}
         onDelete={handleDeleteTransaction}
       />
     </section>
