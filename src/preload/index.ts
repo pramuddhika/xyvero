@@ -65,6 +65,23 @@ const api = {
       categoryIcon,
       categoryColour
     ),
+  updateCategory: (
+    categoryId: number,
+    categoryName: string,
+    categoryGroupId: number,
+    categoryIcon: string,
+    categoryColour: string
+  ): Promise<void> =>
+    electronAPI.ipcRenderer.invoke(
+      'db:updateCategory',
+      categoryId,
+      categoryName,
+      categoryGroupId,
+      categoryIcon,
+      categoryColour
+    ),
+  deleteCategory: (categoryId: number): Promise<void> =>
+    electronAPI.ipcRenderer.invoke('db:deleteCategory', categoryId),
   listAccounts: (): Promise<
     Array<{
       account_id: number

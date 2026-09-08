@@ -5,6 +5,7 @@ import { AlertTriangle, X, Loader2 } from 'lucide-react'
 interface ConfirmModalProps {
   isOpen: boolean
   title: string
+  itemLabel?: string
   itemName?: string
   itemIcon?: React.ReactNode
   itemColor?: string
@@ -22,6 +23,7 @@ interface ConfirmModalProps {
 export default function ConfirmModal({
   isOpen,
   title,
+  itemLabel = 'Target Account',
   itemName,
   itemIcon,
   itemColor,
@@ -101,7 +103,7 @@ export default function ConfirmModal({
               ) : null}
               <div className="flex flex-col min-w-0">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--theme-text-muted)]">
-                  Target Account
+                  {itemLabel}
                 </span>
                 <span className="text-sm font-semibold text-[var(--theme-text-strong)] truncate">
                   {itemName}

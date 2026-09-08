@@ -1,67 +1,48 @@
 /* eslint-disable prettier/prettier */
 import React, { useCallback, useEffect, useState, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
 import { Plus, Search, X } from 'lucide-react'
 import { Icon } from '../components/Icon'
-import { COLOR_PALETTE } from '../components/Color'
-import IconPicker from '../components/IconPicker'
-import ColorPicker from '../components/ColorPicker'
-import FormModal from '../components/FormModal'
+import CategoryDetail from '../components/CategoryDetail'
+import CategoryFormModal, { CategoryFormValues } from '../components/CategoryFormModal'
 import { getCurrencySymbol } from '../utils/currency'
-import type { CategoryTypeRecord, CategoryRecord } from '../types'
-
-interface CategoryFormValues {
-  categoryName: string
-  categoryGroupId: string
-  categoryIcon: string
-  categoryColour: string
-}
+import type { CategoryTypeRecord, CategoryRecord, AccountRecord } from '../types'
 
 function Categories(): React.JSX.Element {
   const [categories, setCategories] = useState<CategoryRecord[]>([])
   const [categoryTypes, setCategoryTypes] = useState<CategoryTypeRecord[]>([])
+  const [accounts, setAccounts] = useState<AccountRecord[]>([])
   const [currencyType, setCurrencyType] = useState<string>('USD')
+  const [monthStartDay, setMonthStartDay] = useState<number>(1)
+  const [selectedCategory, setSelectedCategory] = useState<CategoryRecord | null>(null)
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState<string>('')
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    reset,
-    formState: { errors, isSubmitting }
-  } = useForm<CategoryFormValues>({
-    defaultValues: {
-      categoryName: '',
-      categoryGroupId: '',
-      categoryIcon: 'circle',
-      categoryColour: '#6366f1'
-    }
-  })
-
-  // Watch fields for rendering active selections
-  const selectedIcon = watch('categoryIcon')
-  const selectedColour = watch('categoryColour')
-
   const currencySymbol = useMemo(() => getCurrencySymbol(currencyType), [currencyType])
 
   const fetchData = useCallback(async (): Promise<void> => {
-    setIsLoading(true)
     try {
       if (window.api) {
-        const [cats, types, configVal] = await Promise.all([
+        const [cats, types, configVal, accs, monthStartVal] = await Promise.all([
           window.api.listCategories ? window.api.listCategories() : [],
           window.api.listCategoryTypes ? window.api.listCategoryTypes() : [],
-          window.api.getConfigurationValue ? window.api.getConfigurationValue('CURRENCY_TYPE') : undefined
+          window.api.getConfigurationValue ? window.api.getConfigurationValue('CURRENCY_TYPE') : undefined,
+          window.api.listAccounts ? window.api.listAccounts() : [],
+          window.api.getConfigurationValue ? window.api.getConfigurationValue('MONTH_START_DATE') : undefined
         ])
 
         setCategories(cats || [])
         setCategoryTypes(types || [])
+        setAccounts(accs || [])
         if (configVal?.configuration_value) {
           setCurrencyType(configVal.configuration_value)
+        }
+        if (monthStartVal?.configuration_value) {
+          const parsed = parseInt(monthStartVal.configuration_value, 10)
+          if (!isNaN(parsed) && parsed >= 1 && parsed <= 31) {
+            setMonthStartDay(parsed)
+          }
         }
       }
     } catch (err) {
@@ -72,6 +53,7 @@ function Categories(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchData()
   }, [fetchData])
 
@@ -93,12 +75,6 @@ function Categories(): React.JSX.Element {
 
   const handleOpenModal = (): void => {
     setSaveError(null)
-    reset({
-      categoryName: '',
-      categoryGroupId: categoryTypes[0]?.category_id.toString() || '1',
-      categoryIcon: 'circle',
-      categoryColour: COLOR_PALETTE[0] || '#6366f1'
-    })
     setIsModalOpen(true)
   }
 
@@ -123,11 +99,34 @@ function Categories(): React.JSX.Element {
     }
   }
 
+  // Active selected category resolved from latest categories state
+  const activeSelectedCategory = useMemo(() => {
+    if (!selectedCategory) return null
+    return categories.find((c) => c.category_id === selectedCategory.category_id) || selectedCategory
+  }, [categories, selectedCategory])
+
+  if (activeSelectedCategory) {
+    return (
+      <CategoryDetail
+        category={activeSelectedCategory}
+        categoryTypes={categoryTypes}
+        categories={categories}
+        accounts={accounts}
+        monthStartDay={monthStartDay}
+        currencyType={currencyType}
+        onBack={() => setSelectedCategory(null)}
+        onCategoryUpdated={fetchData}
+      />
+    )
+  }
+
   /** Renders a single category card */
   const renderCategoryCard = (cat: CategoryRecord): React.JSX.Element => (
     <div
       key={cat.category_id}
-      className="flex items-center gap-3 p-3.5 rounded-2xl border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] hover:border-emerald-500/40 hover:shadow-md transition-all group/card cursor-default"
+      onClick={() => setSelectedCategory(cat)}
+      className="flex items-center gap-3 p-3.5 rounded-2xl border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] hover:border-emerald-500/50 hover:shadow-md hover:scale-[1.015] active:scale-[0.985] transition-all group/card cursor-pointer"
+      title={`View ${cat.category_name} transactions & details`}
     >
       <div
         className="w-11 h-11 rounded-xl flex items-center justify-center text-white shrink-0 shadow-sm transition-transform group-hover/card:scale-105"
@@ -136,7 +135,7 @@ function Categories(): React.JSX.Element {
         <Icon icon={cat.category_icon} size={22} />
       </div>
       <div className="flex-1 min-w-0">
-        <h4 className="font-semibold text-sm truncate text-[var(--theme-text-strong)]">
+        <h4 className="font-semibold text-sm truncate text-[var(--theme-text-strong)] group-hover/card:text-emerald-500 transition-colors">
           {cat.category_name}
         </h4>
         <span className="text-xs text-[var(--theme-text-muted)] font-mono font-semibold block mt-0.5">
@@ -260,83 +259,15 @@ function Categories(): React.JSX.Element {
         </div>
       )}
 
-      {/* Modal Dialog */}
-      <FormModal
+      {/* Shared CategoryFormModal in 'create' mode */}
+      <CategoryFormModal
         isOpen={isModalOpen}
-        title="Create New Category"
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleSubmit(onSubmit)}
-        isSubmitting={isSubmitting}
-        submitLabel="Save Category"
+        mode="create"
+        categoryTypes={categoryTypes}
         saveError={saveError}
-      >
-        {/* Type Select and Name Input */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
-              Category Type
-            </label>
-            <select
-              {...register('categoryGroupId', { required: true })}
-              className="w-full px-3.5 py-2.5 text-sm bg-[var(--color-background-mute)] border border-[var(--theme-border-soft)] rounded-xl text-[var(--theme-text-strong)] focus:outline-none focus:border-emerald-500/50 cursor-pointer transition-colors"
-            >
-              {categoryTypes.map((t) => (
-                <option
-                  key={t.category_id}
-                  value={t.category_id.toString()}
-                  className="bg-[var(--color-background-mute)] text-[var(--theme-text-strong)]"
-                >
-                  {t.category_name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
-              Category Name
-            </label>
-            <input
-              type="text"
-              placeholder="Enter name (e.g. Groceries)"
-              autoComplete="off"
-              {...register('categoryName', {
-                required: 'Category name is required',
-                maxLength: { value: 30, message: 'Max 30 characters allowed' }
-              })}
-              className="w-full px-3.5 py-2.5 text-sm bg-[var(--theme-control-bg)] border border-[var(--theme-border-soft)] rounded-xl text-[var(--theme-text-strong)] focus:outline-none focus:border-emerald-500/50 transition-colors"
-            />
-            {errors.categoryName && (
-              <span className="text-[11px] text-red-400 font-medium">
-                {errors.categoryName.message}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Icon Selector */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
-            Category Icon
-          </label>
-          <IconPicker
-            selectedIcon={selectedIcon}
-            selectedColor={selectedColour}
-            onSelect={(iconName) => setValue('categoryIcon', iconName)}
-          />
-        </div>
-
-        {/* Color Selector */}
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-[var(--theme-text-strong)]">
-            Category Color
-          </label>
-          <ColorPicker
-            selectedColor={selectedColour}
-            onSelect={(color) => setValue('categoryColour', color)}
-          />
-        </div>
-      </FormModal>
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={onSubmit}
+      />
     </section>
   )
 }

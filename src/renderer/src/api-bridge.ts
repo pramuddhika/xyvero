@@ -138,6 +138,40 @@ if (typeof window !== 'undefined' && !window.api) {
       }
       return result.categoryId
     },
+    updateCategory: async (
+      categoryId: number,
+      categoryName: string,
+      categoryGroupId: number,
+      categoryIcon: string,
+      categoryColour: string
+    ): Promise<void> => {
+      const res = await fetch('/api/updateCategory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          categoryId,
+          categoryName,
+          categoryGroupId,
+          categoryIcon,
+          categoryColour
+        })
+      })
+      const result = await parseJson<{ success?: boolean; error?: string }>(res)
+      if (result.error) {
+        throw new Error(result.error)
+      }
+    },
+    deleteCategory: async (categoryId: number): Promise<void> => {
+      const res = await fetch('/api/deleteCategory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ categoryId })
+      })
+      const result = await parseJson<{ success?: boolean; error?: string }>(res)
+      if (result.error) {
+        throw new Error(result.error)
+      }
+    },
     listTransactionTypes: async () => {
       const res = await fetch('/api/listTransactionTypes')
       return parseJson(res)
@@ -230,5 +264,37 @@ if (typeof window !== 'undefined' && !window.api) {
       startDownload: () => {},
       quitAndInstall: () => {}
     }
+  }
+}
+
+// If running in an Electron window where window.api was already injected by an older preload instance,
+// ensure newly added category methods are wired up to electron.ipcRenderer.
+if (typeof window !== 'undefined' && window.api) {
+  const electronApi = (
+    window as unknown as {
+      electron?: { ipcRenderer?: { invoke: (channel: string, ...args: unknown[]) => Promise<unknown> } }
+    }
+  ).electron
+
+  if (!window.api.deleteCategory && electronApi?.ipcRenderer) {
+    window.api.deleteCategory = (categoryId: number): Promise<void> =>
+      electronApi.ipcRenderer!.invoke('db:deleteCategory', categoryId) as Promise<void>
+  }
+  if (!window.api.updateCategory && electronApi?.ipcRenderer) {
+    window.api.updateCategory = (
+      categoryId: number,
+      categoryName: string,
+      categoryGroupId: number,
+      categoryIcon: string,
+      categoryColour: string
+    ): Promise<void> =>
+      electronApi.ipcRenderer!.invoke(
+        'db:updateCategory',
+        categoryId,
+        categoryName,
+        categoryGroupId,
+        categoryIcon,
+        categoryColour
+      ) as Promise<void>
   }
 }

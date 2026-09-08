@@ -69,7 +69,6 @@ export default function AccountDetail({
 
   // Fetch transactions for this account
   const fetchTransactions = useCallback(async (): Promise<void> => {
-    setIsLoading(true)
     try {
       if (window.api?.listTransactions) {
         const txs = await window.api.listTransactions()
@@ -83,6 +82,7 @@ export default function AccountDetail({
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchTransactions()
   }, [fetchTransactions])
 

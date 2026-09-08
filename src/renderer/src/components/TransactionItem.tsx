@@ -10,6 +10,7 @@ interface TransactionItemProps {
   categories: CategoryRecord[]
   accounts: AccountRecord[]
   currentAccountId?: number
+  currentCategoryId?: number
   currencySymbol?: string
   currencyType?: string
   onClick?: () => void
@@ -20,6 +21,7 @@ export default function TransactionItem({
   categories,
   accounts,
   currentAccountId,
+  currentCategoryId,
   currencySymbol = '$',
   currencyType = 'USD',
   onClick
@@ -89,7 +91,10 @@ export default function TransactionItem({
 
   // Subtitle / Counter-party or Category description
   let detailLabel = category?.category_name || 'Uncategorized'
-  if (isTransfer) {
+  if (currentCategoryId !== undefined) {
+    // When viewed inside CategoryDetail, show the associated account name
+    detailLabel = toAccount?.account_name || 'Account'
+  } else if (isTransfer) {
     if (isTransferIn && fromAccount) {
       detailLabel = `From ${fromAccount.account_name}`
     } else if (isTransferOut && toAccount) {
