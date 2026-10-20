@@ -1,10 +1,10 @@
 /* eslint-disable prettier/prettier */
 import React from 'react'
 import logoImage from '../assets/logo.jpeg'
-import { Sparkles, ShieldCheck, Zap, FolderKanban, Palette, Mail } from 'lucide-react'
+import { Sparkles, ShieldCheck, Zap, FolderKanban, Palette, Globe } from 'lucide-react'
 
 function About(): React.JSX.Element {
-  const portfolioUrl = 'https://www.pramuddhika.com/'
+  const officialWebsiteUrl = 'https://xyvero.pramuddhika.com/'
 
   const [appVersion, setAppVersion] = React.useState('0.0.1')
   React.useEffect(() => {
@@ -88,15 +88,15 @@ function About(): React.JSX.Element {
         {/* Direct Link Footer Bar */}
         <div className="about-link-footer">
           <div className="about-link-details">
-            <Mail size={15} className="about-footer-icon" />
+            <Globe size={15} className="about-footer-icon" />
             <span className="about-link-caption">Official Website:</span>
             <a
-              href={portfolioUrl}
+              href={officialWebsiteUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="about-footer-url"
             >
-              {portfolioUrl}
+              {officialWebsiteUrl}
             </a>
           </div>
           <span className="about-copyright">
