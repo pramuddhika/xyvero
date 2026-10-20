@@ -90,6 +90,14 @@ interface AppApi {
     categoryIcon: string,
     categoryColour: string
   ) => Promise<number>
+  updateCategory: (
+    categoryId: number,
+    categoryName: string,
+    categoryGroupId: number,
+    categoryIcon: string,
+    categoryColour: string
+  ) => Promise<void>
+  deleteCategory: (categoryId: number) => Promise<void>
   listTransactionTypes: () => Promise<TransactionTypeRecord[]>
   listTransactions: () => Promise<TransactionRecord[]>
   addTransaction: (

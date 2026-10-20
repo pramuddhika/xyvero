@@ -55,7 +55,6 @@ function Accounts(): React.JSX.Element {
   }
 
   const fetchData = useCallback(async (): Promise<void> => {
-    setIsLoading(true)
     try {
       if (window.api) {
         const [accs, types, configVal, cats, monthStartVal] = await Promise.all([
@@ -87,6 +86,7 @@ function Accounts(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchData()
   }, [fetchData])
 

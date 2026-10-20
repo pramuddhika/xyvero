@@ -55,6 +55,7 @@ interface TransactionDrawerProps {
   initialTransaction?: TransactionRecord | null
   mode?: 'create' | 'edit'
   defaultAccountId?: number | string
+  defaultDate?: string
   lockAccount?: boolean
   onSave?: (data: TransactionFormData) => void | Promise<void>
   onDelete?: (timeStamp: string) => void | Promise<void>
@@ -314,9 +315,17 @@ function CategorySelect({
 }
 
 /**
- * Returns formatted YYYY-MM-DDTHH:mm string based on current local time.
+ * Returns formatted YYYY-MM-DDTHH:mm string based on current local time or provided date string.
  */
-function getLocalDateTimeString(date: Date = new Date()): string {
+function getLocalDateTimeString(dateInput?: Date | string): string {
+  if (typeof dateInput === 'string' && dateInput.trim()) {
+    if (dateInput.includes('T')) return dateInput.slice(0, 16)
+    const now = new Date()
+    const hours = String(now.getHours()).padStart(2, '0')
+    const minutes = String(now.getMinutes()).padStart(2, '0')
+    return `${dateInput}T${hours}:${minutes}`
+  }
+  const date = dateInput instanceof Date ? dateInput : new Date()
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
@@ -335,6 +344,7 @@ export default function TransactionDrawer({
   initialTransaction,
   mode = 'create',
   defaultAccountId,
+  defaultDate,
   lockAccount = false,
   onSave,
   onDelete
@@ -361,7 +371,7 @@ export default function TransactionDrawer({
     const defaultCat = categories.find((c) => c.category_group_id === 2)
     return defaultCat ? defaultCat.category_id.toString() : categories[0]?.category_id.toString() || ''
   })
-  const [txDate, setTxDate] = useState<string>(() => getLocalDateTimeString())
+  const [txDate, setTxDate] = useState<string>(() => getLocalDateTimeString(defaultDate))
   const [fees, setFees] = useState<string>('0.00')
   const [note, setNote] = useState<string>('')
   const [formError, setFormError] = useState<string | null>(null)
@@ -424,7 +434,7 @@ export default function TransactionDrawer({
         setAmount('')
         setFees('0.00')
         setNote('')
-        setTxDate(getLocalDateTimeString())
+        setTxDate(getLocalDateTimeString(defaultDate))
 
         const targetAccId =
           defaultAccountId !== undefined && defaultAccountId !== null

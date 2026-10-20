@@ -1,57 +1,23 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable prettier/prettier */
-import React, { useMemo, useState, useEffect } from 'react'
+import React, { useMemo, useState, useEffect, useCallback } from 'react'
 import { Plus } from 'lucide-react'
 import { getCurrencySymbol } from '../utils/currency'
 import TransactionDrawer, { TransactionFormData } from '../components/TransactionDrawer'
-import type { AccountRecord, CategoryRecord } from '../types'
-
-type CalendarEvent = {
-  title: string
-  date: Date
-  category: 'Budget' | 'Bills' | 'Planning' | 'General'
-}
+import DayDetail from '../components/DayDetail'
+import type { AccountRecord, CategoryRecord, TransactionRecord } from '../types'
 
 type CalendarCell = {
   date: Date
+  dateStr: string
   isCurrentMonth: boolean
   isToday: boolean
-  events: CalendarEvent[]
 }
 
 const weekdayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 type ThemeMode = 'dark' | 'light'
-
-const eventSeed = [
-  {
-    title: 'Monthly budget review',
-    dayOffset: 1,
-    category: 'Budget' as const
-  },
-  {
-    title: 'Subscription renewals',
-    dayOffset: 3,
-    category: 'Bills' as const
-  },
-  {
-    title: 'Cash flow check-in',
-    dayOffset: 6,
-    category: 'Planning' as const
-  },
-  {
-    title: 'Savings transfer',
-    dayOffset: 15,
-    category: 'General' as const
-  }
-]
-
-const categoryStyles: Record<CalendarEvent['category'], string> = {
-  Budget: 'bg-emerald-400/15 text-emerald-50 ring-1 ring-inset ring-emerald-300/25',
-  Bills: 'bg-sky-400/15 text-sky-50 ring-1 ring-inset ring-sky-300/25',
-  Planning: 'bg-amber-400/15 text-amber-50 ring-1 ring-inset ring-amber-300/25',
-  General: 'bg-white/10 text-white ring-1 ring-inset ring-white/15'
-}
 
 function isSameDay(left: Date, right: Date): boolean {
   return (
@@ -125,12 +91,12 @@ function startOfCalendarGrid(periodStart: Date, weekStartIndex = 0): Date {
 function createCalendarCells(
   periodStart: Date,
   periodEnd: Date,
-  events: CalendarEvent[],
   weekStartIndex = 0
 ): CalendarCell[] {
   const today = new Date()
   const gridStart = startOfCalendarGrid(periodStart, weekStartIndex)
   const cells: CalendarCell[] = []
+  const pad = (n: number): string => (n < 10 ? `0${n}` : `${n}`)
 
   for (let index = 0; index < 42; index += 1) {
     const cellDate = new Date(gridStart)
@@ -139,12 +105,13 @@ function createCalendarCells(
 
     const cellTime = cellDate.getTime()
     const isInPeriod = cellTime >= periodStart.getTime() && cellTime <= periodEnd.getTime()
+    const dateStr = `${cellDate.getFullYear()}-${pad(cellDate.getMonth() + 1)}-${pad(cellDate.getDate())}`
 
     cells.push({
       date: cellDate,
+      dateStr,
       isCurrentMonth: isInPeriod,
-      isToday: isSameDay(cellDate, today),
-      events: events.filter((event) => isSameDay(event.date, cellDate))
+      isToday: isSameDay(cellDate, today)
     })
   }
 
@@ -161,71 +128,95 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
   const [monthStartDate, setMonthStartDate] = useState<number>(1)
   const isLightTheme = theme === 'light'
 
-  // Right-side slide-over drawer state
+  // Selected day for day-by-day detail view
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
+
+  // Drawer and data state
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false)
   const [accounts, setAccounts] = useState<AccountRecord[]>([])
   const [categories, setCategories] = useState<CategoryRecord[]>([])
+  const [transactions, setTransactions] = useState<TransactionRecord[]>([])
   const [currencyType, setCurrencyType] = useState<string>('USD')
 
   const currencySymbol = useMemo(() => getCurrencySymbol(currencyType), [currencyType])
+  const symbol = currencySymbol || currencyType
 
-  useEffect(() => {
-    if (window.api?.getConfigurationValue) {
-      window.api.getConfigurationValue('MONTH_START_DATE').then((val) => {
-        if (val?.configuration_value) {
-          const parsed = parseInt(val.configuration_value, 10)
-          if (!isNaN(parsed) && parsed >= 1 && parsed <= 31) {
-            setMonthStartDate(parsed)
-          }
-        }
-      })
-    }
-  }, [])
-
-  // Load active accounts and categories for transaction form
-  useEffect(() => {
-    if (window.api) {
-      Promise.all([
+  const fetchData = useCallback(async (): Promise<void> => {
+    if (!window.api) return
+    try {
+      const [accs, cats, txs, configVal, monthStartVal] = await Promise.all([
         window.api.listAccounts ? window.api.listAccounts() : [],
         window.api.listCategories ? window.api.listCategories() : [],
+        window.api.listTransactions ? window.api.listTransactions() : [],
         window.api.getConfigurationValue
           ? window.api.getConfigurationValue('CURRENCY_TYPE')
+          : undefined,
+        window.api.getConfigurationValue
+          ? window.api.getConfigurationValue('MONTH_START_DATE')
           : undefined
       ])
-        .then(([accs, cats, configVal]) => {
-          setAccounts(accs || [])
-          setCategories(cats || [])
-          if (configVal?.configuration_value) {
-            setCurrencyType(configVal.configuration_value)
-          }
-        })
-        .catch((err) => {
-          console.error('Failed to load accounts and categories:', err)
-        })
+
+      setAccounts(accs || [])
+      setCategories(cats || [])
+      setTransactions(txs || [])
+      if (configVal?.configuration_value) {
+        setCurrencyType(configVal.configuration_value)
+      }
+      if (monthStartVal?.configuration_value) {
+        const parsed = parseInt(monthStartVal.configuration_value, 10)
+        if (!isNaN(parsed) && parsed >= 1 && parsed <= 31) {
+          setMonthStartDate(parsed)
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load transaction data:', err)
     }
   }, [])
+
+  useEffect(() => {
+    void fetchData()
+  }, [fetchData])
+
+  // Group transactions by date string (YYYY-MM-DD)
+  const transactionsByDate = useMemo(() => {
+    const map = new Map<
+      string,
+      { transactions: TransactionRecord[]; income: number; expense: number }
+    >()
+    for (const tx of transactions) {
+      const d = tx.transaction_time.slice(0, 10)
+      if (!map.has(d)) {
+        map.set(d, { transactions: [], income: 0, expense: 0 })
+      }
+      const entry = map.get(d)!
+      entry.transactions.push(tx)
+      if (tx.transaction_type_id === 1) {
+        entry.income += tx.amount
+      } else if (tx.transaction_type_id === 2) {
+        entry.expense += tx.amount
+      } else if (tx.transaction_type_id === 3 && tx.fees && tx.fees > 0) {
+        entry.expense += tx.fees
+      }
+    }
+    return map
+  }, [transactions])
+
+  const formatAmount = (val: number): string => {
+    return val.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })
+  }
 
   const { start: periodStart, end: periodEnd } = useMemo(() => {
     return getPeriodBoundaries(visibleMonth, monthStartDate)
   }, [visibleMonth, monthStartDate])
 
-  const calendarEvents = useMemo<CalendarEvent[]>(() => {
-    return eventSeed.map((event) => {
-      const eventDate = new Date(periodStart)
-      eventDate.setDate(periodStart.getDate() + event.dayOffset - 1)
-      return {
-        title: event.title,
-        category: event.category,
-        date: eventDate
-      }
-    })
-  }, [periodStart])
-
   const computedWeekStartIndex = weekStart && weekStart.toLowerCase() === 'monday' ? 1 : 0
 
   const calendarCells = useMemo(
-    () => createCalendarCells(periodStart, periodEnd, calendarEvents, computedWeekStartIndex),
-    [calendarEvents, periodStart, periodEnd, computedWeekStartIndex]
+    () => createCalendarCells(periodStart, periodEnd, computedWeekStartIndex),
+    [periodStart, periodEnd, computedWeekStartIndex]
   )
 
   const displayedWeekdayLabels = useMemo(() => {
@@ -247,12 +238,18 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
     setVisibleMonth((currentMonth) => addMonths(currentMonth, direction))
   }
 
-  // Keyboard navigation & ESC key handler for drawer
+  // Keyboard navigation & ESC key handler
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (isDrawerOpen) {
         if (e.key === 'Escape') {
           setIsDrawerOpen(false)
+        }
+        return
+      }
+      if (selectedDay) {
+        if (e.key === 'Escape') {
+          setSelectedDay(null)
         }
         return
       }
@@ -265,7 +262,7 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
 
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [isDrawerOpen])
+  }, [isDrawerOpen, selectedDay])
 
   const handleSaveTransaction = async (data: TransactionFormData): Promise<void> => {
     try {
@@ -281,14 +278,26 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
           data.note
         )
       }
-      if (window.api?.listAccounts) {
-        const updatedAccounts = await window.api.listAccounts()
-        setAccounts(updatedAccounts || [])
-      }
+      await fetchData()
     } catch (err) {
       console.error('Failed to save transaction to database:', err)
     }
     setIsDrawerOpen(false)
+  }
+
+  // Render DayDetail view when a calendar day is selected
+  if (selectedDay) {
+    return (
+      <DayDetail
+        dateStr={selectedDay}
+        accounts={accounts}
+        categories={categories}
+        currencyType={currencyType}
+        currencySymbol={symbol}
+        onBack={() => setSelectedDay(null)}
+        onTransactionUpdated={fetchData}
+      />
+    )
   }
 
   const shellClassName = isLightTheme
@@ -402,7 +411,7 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
             </button>
           </div>
 
-          {/* Easy-Access Top Bar + Marker Button */}
+          {/* Top Bar + Add Transaction Button */}
           <button
             type="button"
             onClick={() => setIsDrawerOpen(true)}
@@ -416,7 +425,7 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
         </div>
       </div>
 
-      {/* Calendar View */}
+      {/* Calendar Grid View */}
       <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-5">
         <div
           className={`grid grid-cols-7 gap-px rounded-t-2xl border text-center text-[11px] font-semibold uppercase tracking-[0.22em] ${
@@ -438,89 +447,85 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
         </div>
 
         <div className={panelClassName}>
-          {calendarCells.map((cell) => (
-            <div
-              key={cell.date.toISOString()}
-              className={`relative flex min-h-0 flex-col overflow-hidden p-3 transition ${
-                isLightTheme ? 'bg-white' : 'bg-[rgba(255,255,255,0.03)]'
-              } ${
-                cell.isCurrentMonth
-                  ? isLightTheme
-                    ? 'text-slate-900'
-                    : 'text-(--theme-text-strong)'
-                  : isLightTheme
-                    ? 'text-slate-300'
-                    : 'text-white/35'
-              } ${
-                cell.isToday
-                  ? isLightTheme
-                    ? 'bg-emerald-50 ring-1 ring-inset ring-emerald-300/50'
-                    : 'bg-emerald-400/12 ring-1 ring-inset ring-emerald-300/30'
-                  : ''
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <span
-                  className={`text-sm font-semibold sm:text-base ${isLightTheme ? 'text-slate-900' : ''}`}
-                >
-                  {cell.date.getDate().toString().padStart(2, '0')}
-                </span>
-                {cell.isToday ? (
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${
-                      isLightTheme
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-emerald-400/20 text-emerald-50'
-                    }`}
-                  >
-                    Today
-                  </span>
-                ) : null}
-              </div>
+          {calendarCells.map((cell) => {
+            const dayData = transactionsByDate.get(cell.dateStr)
 
-              <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
-                {cell.events.length > 0 ? (
-                  cell.events.map((event) => (
-                    <div
-                      key={`${event.title}-${event.date.toISOString()}`}
-                      className={`rounded-xl px-2.5 py-2 text-left text-xs font-semibold leading-snug ${
+            return (
+              <div
+                key={cell.dateStr}
+                onClick={() => setSelectedDay(cell.dateStr)}
+                title={`Click to view transactions for ${cell.dateStr}`}
+                className={`group relative flex min-h-0 flex-col overflow-hidden p-2.5 sm:p-3 transition-all cursor-pointer select-none hover:ring-2 hover:ring-emerald-500/60 hover:z-10 ${
+                  isLightTheme ? 'bg-white hover:bg-slate-50/80' : 'bg-[rgba(255,255,255,0.03)] hover:bg-white/8'
+                } ${
+                  cell.isCurrentMonth
+                    ? isLightTheme
+                      ? 'text-slate-900'
+                      : 'text-(--theme-text-strong)'
+                    : isLightTheme
+                      ? 'text-slate-300'
+                      : 'text-white/35'
+                } ${
+                  cell.isToday
+                    ? isLightTheme
+                      ? 'bg-emerald-50/90 ring-1 ring-inset ring-emerald-300/50'
+                      : 'bg-emerald-400/12 ring-1 ring-inset ring-emerald-300/30'
+                    : ''
+                }`}
+              >
+                <div className="flex items-start justify-between gap-1">
+                  <span
+                    className={`text-sm font-bold sm:text-base ${isLightTheme ? 'text-slate-900' : ''}`}
+                  >
+                    {cell.date.getDate().toString().padStart(2, '0')}
+                  </span>
+                  {cell.isToday ? (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em] ${
                         isLightTheme
-                          ? {
-                              Budget:
-                                'bg-emerald-100 text-emerald-900 ring-1 ring-inset ring-emerald-200',
-                              Bills: 'bg-sky-100 text-sky-900 ring-1 ring-inset ring-sky-200',
-                              Planning:
-                                'bg-amber-100 text-amber-900 ring-1 ring-inset ring-amber-200',
-                              General:
-                                'bg-slate-100 text-slate-700 ring-1 ring-inset ring-slate-200'
-                            }[event.category]
-                          : categoryStyles[event.category]
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-emerald-400/20 text-emerald-50'
                       }`}
                     >
-                      <div className="truncate">{event.title}</div>
-                      <div
-                        className={`mt-1 text-[10px] font-medium uppercase tracking-[0.18em] ${
-                          isLightTheme ? 'opacity-75' : 'opacity-70'
-                        }`}
-                      >
-                        {event.category}
+                      Today
+                    </span>
+                  ) : null}
+                </div>
+
+                {dayData && (dayData.income > 0 || dayData.expense > 0) ? (
+                  <div className="mt-2 flex min-h-0 flex-1 flex-col gap-1 overflow-hidden">
+                    {dayData.income > 0 && (
+                      <div className="flex items-center justify-between text-[10px] font-bold font-mono px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 truncate border border-emerald-500/20">
+                        <span>+{symbol}</span>
+                        <span className="truncate">{formatAmount(dayData.income)}</span>
                       </div>
+                    )}
+                    {dayData.expense > 0 && (
+                      <div className="flex items-center justify-between text-[10px] font-bold font-mono px-2 py-0.5 rounded-md bg-red-500/15 text-red-600 dark:text-red-400 truncate border border-red-500/20">
+                        <span>-{symbol}</span>
+                        <span className="truncate">{formatAmount(dayData.expense)}</span>
+                      </div>
+                    )}
+                    <div className="mt-auto flex items-center justify-end text-[10px] pt-0.5">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500 font-semibold flex items-center gap-0.5">
+                        View →
+                      </span>
                     </div>
-                  ))
+                  </div>
                 ) : (
-                  <div
-                    className={`mt-auto text-[11px] ${isLightTheme ? 'text-slate-300' : 'text-white/22'}`}
-                  >
-                    &nbsp;
+                  <div className="mt-auto flex items-center justify-end text-[10px] pt-1">
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500 font-semibold flex items-center gap-0.5">
+                      View →
+                    </span>
                   </div>
                 )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
-      {/* Floating Action Button (FAB) + Marker for Easy Access */}
+      {/* Floating Action Button (FAB) for Easy Access */}
       <button
         type="button"
         onClick={() => setIsDrawerOpen(true)}
@@ -531,7 +536,7 @@ function Transactions({ theme, weekStart }: TransactionsProps): React.JSX.Elemen
         <Plus size={26} strokeWidth={2.5} />
       </button>
 
-      {/* Separated Right-Side Slide-Over Transaction Drawer with Backdrop Blur */}
+      {/* Separated Right-Side Slide-Over Transaction Drawer */}
       <TransactionDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}

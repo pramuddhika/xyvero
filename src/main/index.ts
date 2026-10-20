@@ -14,6 +14,8 @@ import {
   listCategoryTypes,
   listCategories,
   addCategory,
+  updateCategory,
+  deleteCategory,
   listAccounts,
   addAccount,
   updateAccount,
@@ -139,6 +141,22 @@ app.whenReady().then(() => {
       return addCategory(categoryName, categoryGroupId, categoryIcon, categoryColour)
     }
   )
+  ipcMain.handle(
+    'db:updateCategory',
+    (
+      _,
+      categoryId: number,
+      categoryName: string,
+      categoryGroupId: number,
+      categoryIcon: string,
+      categoryColour: string
+    ) => {
+      updateCategory(categoryId, categoryName, categoryGroupId, categoryIcon, categoryColour)
+    }
+  )
+  ipcMain.handle('db:deleteCategory', (_, categoryId: number) => {
+    deleteCategory(categoryId)
+  })
   ipcMain.handle('db:listAccounts', () => listAccounts())
   ipcMain.handle(
     'db:addAccount',

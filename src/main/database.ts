@@ -499,6 +499,65 @@ export function addCategory(
   return result.lastInsertRowid as number
 }
 
+export function updateCategory(
+  categoryId: number,
+  categoryName: string,
+  categoryGroupId: number,
+  categoryIcon: string,
+  categoryColour: string
+): void {
+  const database = getDatabase()
+  const trimmedName = categoryName.trim()
+  if (!trimmedName) {
+    throw new Error('Category name cannot be empty.')
+  }
+  if (trimmedName.length > 50) {
+    throw new Error('Category name cannot exceed 50 characters.')
+  }
+
+  const existing = database
+    .prepare(
+      `
+        SELECT category_id
+        FROM category
+        WHERE LOWER(category_name) = LOWER(?) AND is_active = 1 AND category_id != ?
+        LIMIT 1
+      `
+    )
+    .get(trimmedName, categoryId)
+
+  if (existing) {
+    throw new Error(`An active category named "${trimmedName}" already exists.`)
+  }
+
+  database
+    .prepare(
+      `
+        UPDATE category
+        SET
+          category_name = ?,
+          category_group_id = ?,
+          category_icon = ?,
+          category_colour = ?
+        WHERE category_id = ?
+      `
+    )
+    .run(trimmedName, categoryGroupId, categoryIcon, categoryColour, categoryId)
+}
+
+export function deleteCategory(categoryId: number): void {
+  const database = getDatabase()
+  database
+    .prepare(
+      `
+        UPDATE category
+        SET is_active = 0
+        WHERE category_id = ?
+      `
+    )
+    .run(categoryId)
+}
+
 export function listAccounts(): AccountRecord[] {
   const database = getDatabase()
   const monthStartDay = getMonthStartDay()
